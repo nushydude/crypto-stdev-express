@@ -9,7 +9,7 @@ const app = express();
 
 app.use(express.json());
 
-app.get("/binance_kline", async (req, res) => {
+app.get("/api/binance_kline", async (req, res) => {
   try {
     const [klineData, avgPrice] = await Promise.all([
       axios.get("https://api.binance.com/api/v3/klines", {
@@ -31,7 +31,7 @@ app.get("/binance_kline", async (req, res) => {
   return res.send([]);
 });
 
-app.post("/settings", async (req, res) => {
+app.post("/api/settings", async (req, res) => {
   const { uri } = req.body;
   let success = false;
   let errorMessage = null;
@@ -48,17 +48,17 @@ app.post("/settings", async (req, res) => {
   res.json({ success, errorMessage, data });
 });
 
-app.get("/test", (req, res) => {
+app.get("/api/test", (req, res) => {
   res.json({ message: "Hello from server!" });
 });
 
 // Have Node serve the files for our built React app
-app.use(express.static(path.resolve(__dirname, "../client/build")));
+// app.use(express.static(path.resolve(__dirname, "../client/build")));
 
 // Express serve up index.html file if it doesn't recognize route
-app.get("*", (req, res) => {
-  res.sendFile(path.resolve(__dirname, "../client/build/index.html"));
-});
+// app.get("*", (req, res) => {
+//   res.sendFile(path.resolve(__dirname, "../client/build/index.html"));
+// });
 
 if (process.env.NODE_ENV === "development") {
   app.listen(PORT, () => {
