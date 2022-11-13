@@ -1,12 +1,14 @@
 const path = require("path");
 const express = require("express");
 const axios = require("axios");
+const cors = require("cors");
 const transformKLineData = require("./utils/transformKLineData");
 
 const PORT = process.env.PORT || 3001;
 
 const app = express();
 
+app.use(cors());
 app.use(express.json());
 
 app.get("/api/binance_kline", async (req, res) => {
