@@ -13,16 +13,16 @@ app.get("/binance_kline", async (req, res) => {
   try {
     const [klineData, avgPrice] = await Promise.all([
       axios.get("https://api.binance.com/api/v3/klines", {
-        params: req.query,
+        params: req.query
       }),
       axios.get("https://api.binance.com/api/v3/avgPrice", {
-        params: { symbol: req.query.symbol },
-      }),
+        params: { symbol: req.query.symbol }
+      })
     ]);
 
     return res.json({
       klineData: transformKLineData(klineData.data),
-      avgPrice: avgPrice.data,
+      avgPrice: avgPrice.data
     });
   } catch (error) {
     // TODO: log error in Sentry
@@ -60,6 +60,10 @@ app.get("*", (req, res) => {
   res.sendFile(path.resolve(__dirname, "../client/build/index.html"));
 });
 
-app.listen(PORT, () => {
-  console.log(`Server listening on ${PORT}`);
-});
+if (process.env.NODE_ENV === "development") {
+  app.listen(PORT, () => {
+    console.log(`Server listening on ${PORT}`);
+  });
+}
+
+module.exports = app;
