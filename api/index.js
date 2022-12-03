@@ -35,10 +35,10 @@ app.use(express.json());
 app.get("/api/binance_kline", async (req, res) => {
   try {
     const [klineData, avgPrice] = await Promise.all([
-      axios.get("https://api.binance.us/api/v3/klines", {
+      axios.get("https://api.binance.com/api/v3/klines", {
         params: req.query,
       }),
-      axios.get("https://api.binance.us/api/v3/avgPrice", {
+      axios.get("https://api.binance.com/api/v3/avgPrice", {
         params: { symbol: req.query.symbol },
       }),
     ]);
