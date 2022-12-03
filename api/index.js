@@ -1,12 +1,33 @@
-const path = require("path");
 const express = require("express");
 const axios = require("axios");
 const cors = require("cors");
+const Sentry = require("@sentry/node");
+const Tracing = require("@sentry/tracing");
 const transformKLineData = require("./utils/transformKLineData");
 
 const PORT = process.env.PORT || 3001;
 
 const app = express();
+
+Sentry.init({
+  dsn: "https://27734235b776421294f22c2b7b0a1c32@o294811.ingest.sentry.io/4504262272221184",
+  integrations: [
+    // enable HTTP calls tracing
+    new Sentry.Integrations.Http({ tracing: true }),
+    // enable Express.js middleware tracing
+    new Tracing.Integrations.Express({ app }),
+  ],
+
+  // Set tracesSampleRate to 1.0 to capture 100%
+  // of transactions for performance monitoring.
+  // We recommend adjusting this value in production
+  tracesSampleRate: 1.0,
+});
+// RequestHandler creates a separate execution context using domains, so that every
+// transaction/span/breadcrumb is attached to its own Hub instance
+app.use(Sentry.Handlers.requestHandler());
+// TracingHandler creates a trace for every incoming request
+app.use(Sentry.Handlers.tracingHandler());
 
 app.use(cors());
 app.use(express.json());
@@ -15,19 +36,23 @@ app.get("/api/binance_kline", async (req, res) => {
   try {
     const [klineData, avgPrice] = await Promise.all([
       axios.get("https://api.binance.com/api/v3/klines", {
-        params: req.query
+        params: req.query,
       }),
       axios.get("https://api.binance.com/api/v3/avgPrice", {
-        params: { symbol: req.query.symbol }
-      })
+        params: { symbol: req.query.symbol },
+      }),
     ]);
 
-    return res.json({
+    const data = {
       klineData: transformKLineData(klineData.data),
-      avgPrice: avgPrice.data
-    });
+      avgPrice: avgPrice.data,
+    };
+
+    console.log("data:", data);
+
+    return res.json(data);
   } catch (error) {
-    // TODO: log error in Sentry
+    Sentry.captureException(error);
   }
 
   return res.send([]);
@@ -54,15 +79,20 @@ app.get("/api/test", (req, res) => {
   res.json({ message: "Hello from server!" });
 });
 
-// Have Node serve the files for our built React app
-// app.use(express.static(path.resolve(__dirname, "../client/build")));
+app.get("/api/debug-sentry", (req, res) => {
+  throw new Error("Sentry test error!");
+});
 
-// Express serve up index.html file if it doesn't recognize route
-// app.get("*", (req, res) => {
-//   res.sendFile(path.resolve(__dirname, "../client/build/index.html"));
-// });
+app.use(Sentry.Handlers.errorHandler());
 
-if (process.env.NODE_ENV === "development") {
+app.use(function onError(err, req, res, next) {
+  // The error id is attached to `res.sentry` to be returned
+  // and optionally displayed to the user for support.
+  res.statusCode = 500;
+  res.end(res.sentry + "\n");
+});
+
+if (process.env.NODE_ENV !== "production") {
   app.listen(PORT, () => {
     console.log(`Server listening on ${PORT}`);
   });
