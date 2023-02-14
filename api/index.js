@@ -83,7 +83,7 @@ app.get("/api/cron", (req, res) => {
     "NEARBUSD"
   ];
 
-  const interval: Interval = "4h";
+  const interval = "4h";
   const limit = 100;
 
   const data = Promise.all(
