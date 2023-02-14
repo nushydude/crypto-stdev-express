@@ -92,6 +92,9 @@ app.get("/api/best_dca", async (req, res) => {
   const interval = "4h";
   const limit = 100;
 
+  let id;
+  let message;
+
   try {
     const dataInfo = await Promise.all(
       list.map(async (symbol) => {
@@ -121,11 +124,9 @@ app.get("/api/best_dca", async (req, res) => {
       return res.json({ message: "Nothing to DCA" });
     }
 
-    const message = `Should DCA ${DCATokens.map(
+    message = `Should DCA ${DCATokens.map(
       ({ symbol, dip }) => `${symbol} (${dip.toFixed(2)}%)`
     ).join(", ")}`;
-
-    let id;
 
     if (process.env.NODE_ENV === "production") {
       // official
