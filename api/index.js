@@ -15,13 +15,13 @@ Sentry.init({
     // enable HTTP calls tracing
     new Sentry.Integrations.Http({ tracing: true }),
     // enable Express.js middleware tracing
-    new Tracing.Integrations.Express({ app }),
+    new Tracing.Integrations.Express({ app })
   ],
 
   // Set tracesSampleRate to 1.0 to capture 100%
   // of transactions for performance monitoring.
   // We recommend adjusting this value in production
-  tracesSampleRate: 1.0,
+  tracesSampleRate: 1.0
 });
 // RequestHandler creates a separate execution context using domains, so that every
 // transaction/span/breadcrumb is attached to its own Hub instance
@@ -33,22 +33,21 @@ app.use(cors());
 app.use(express.json());
 
 app.get("/api/binance_kline", async (req, res) => {
+  // req.query = { symbol, interval, limit }
   try {
     const [klineData, avgPrice] = await Promise.all([
       axios.get("https://api.binance.com/api/v3/klines", {
-        params: req.query,
+        params: req.query
       }),
       axios.get("https://api.binance.com/api/v3/avgPrice", {
-        params: { symbol: req.query.symbol },
-      }),
+        params: { symbol: req.query.symbol }
+      })
     ]);
 
     const data = {
       klineData: transformKLineData(klineData.data),
-      avgPrice: avgPrice.data,
+      avgPrice: avgPrice.data
     };
-
-    console.log("data:", data);
 
     return res.json(data);
   } catch (error) {
