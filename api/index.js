@@ -103,10 +103,10 @@ app.get("/api/best_dca", async (req, res) => {
       const standardDeviation = calculateStandardDeviation(prices);
       const mean = calculateMean(prices);
       const targetPrice = mean - sdMultiplier * standardDeviation;
-      const shouldDCA = avgPrice < targetPrice;
-      const dip = ((avgPrice - targetPrice) / targetPrice) * 100;
+      const shouldDCA = avgPrice.price < targetPrice;
+      const dip = ((avgPrice.price - targetPrice) / targetPrice) * 100;
 
-      return { symbol, shouldDCA, dip };
+      return { symbol, avgPrice, targetPrice, shouldDCA, dip };
     })
   );
 
