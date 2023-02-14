@@ -145,12 +145,12 @@ app.get("/api/best_dca", async (req, res) => {
 
     notification.app_id = process.env.ONESIGNAL_APP_ID;
     notification.included_segments = ["Subscribed Users"];
-    notification.heading = {
+    notification.heading = JSON.stringify({
       en: "Crypto DCA Alert!"
-    };
-    notification.contents = {
+    });
+    notification.contents = JSON.stringify({
       en: message
-    };
+    });
     notification.url = "https://crypto-stdev-cra.vercel.app/best-dca";
     const { id } = await client.createNotification(notification);
   }
