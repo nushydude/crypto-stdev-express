@@ -3,6 +3,7 @@ import axios from "axios";
 import cors from "cors";
 import Sentry from "@sentry/node";
 import Tracing from "@sentry/tracing";
+import * as OneSignal from "@onesignal/node-onesignal";
 import { transformKLineData } from "./utils/transformKLineData.js";
 import { getKLinesAndAvgPrice } from "./utils/getKlinesAndAvgPrice.js";
 
@@ -68,7 +69,7 @@ app.get("/api/test", (req, res) => {
   res.json({ message: "Hello from server!" });
 });
 
-app.get("/api/cron", (req, res) => {
+app.get("/api/best_dca", async (req, res) => {
   const list = [
     "BTCBUSD",
     "ETHBUSD",
@@ -86,9 +87,36 @@ app.get("/api/cron", (req, res) => {
   const interval = "4h";
   const limit = 100;
 
-  const data = Promise.all(
-    list.map((symbol) => getKLinesAndAvgPrice(symbol, interval, limit))
-  );
+  // const data = Promise.all(
+  //   list.map((symbol) => getKLinesAndAvgPrice(symbol, interval, limit))
+  // );
+
+  const tokenProvider = {
+    getToken() {
+      return process.env.ONESIGNAL_REST_API_KEY;
+    }
+  };
+
+  const configuration = OneSignal.createConfiguration({
+    authMethods: {
+      app_key: {
+        tokenProvider
+      }
+    }
+  });
+
+  const client = new OneSignal.DefaultApi(configuration);
+
+  const notification = new OneSignal.Notification();
+
+  notification.app_id = process.env.ONESIGNAL_APP_ID;
+  notification.included_segments = ["Subscribed Users"];
+  notification.contents = {
+    en: "Hello OneSignal!"
+  };
+  const { id } = await client.createNotification(notification);
+
+  res.json({ message: "Notification sent" });
 });
 
 app.get("/api/debug-sentry", (req, res) => {

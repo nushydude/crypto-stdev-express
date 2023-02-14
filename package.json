@@ -14,6 +14,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@onesignal/node-onesignal": "^1.0.0-beta9",
     "@sentry/node": "^7.23.0",
     "@sentry/tracing": "^7.23.0",
     "axios": "^1.1.3",
