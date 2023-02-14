@@ -6,6 +6,8 @@ import Tracing from "@sentry/tracing";
 import * as OneSignal from "@onesignal/node-onesignal";
 import { transformKLineData } from "./utils/transformKLineData.js";
 import { getKLinesAndAvgPrice } from "./utils/getKlinesAndAvgPrice.js";
+import { calculateStandardDeviation } from "./utils/calculateStandardDeviation.js";
+import { calculateMean } from "./utils/calculateMean.js";
 
 const PORT = process.env.PORT || 3001;
 
@@ -70,6 +72,8 @@ app.get("/api/test", (req, res) => {
 });
 
 app.get("/api/best_dca", async (req, res) => {
+  const sdMultiplier = 1;
+
   const list = [
     "BTCBUSD",
     "ETHBUSD",
@@ -87,9 +91,24 @@ app.get("/api/best_dca", async (req, res) => {
   const interval = "4h";
   const limit = 100;
 
-  // const data = Promise.all(
-  //   list.map((symbol) => getKLinesAndAvgPrice(symbol, interval, limit))
-  // );
+  const dataInfo = await Promise.all(
+    list.map(async (symbol) => {
+      const { klineData, avgPrice } = await getKLinesAndAvgPrice(
+        symbol,
+        interval,
+        limit
+      );
+
+      const prices = klineData.map((d) => d.openPrice);
+      const standardDeviation = calculateStandardDeviation(prices);
+      const mean = calculateMean(prices);
+      const targetPrice = mean - sdMultiplier * standardDeviation;
+      const shouldDCA = avgPrice < targetPrice;
+      const dip = ((avgPrice - targetPrice) / targetPrice) * 100;
+
+      return { symbol, shouldDCA, dip };
+    })
+  );
 
   const tokenProvider = {
     getToken() {
@@ -111,8 +130,14 @@ app.get("/api/best_dca", async (req, res) => {
 
   notification.app_id = process.env.ONESIGNAL_APP_ID;
   notification.included_segments = ["Subscribed Users"];
+  notification.heading = {
+    en: "Crypto DCA Alert!"
+  };
   notification.contents = {
-    en: "Hello OneSignal!"
+    en: `Should DCA ${dataInfo
+      .filter(({ shouldDCA }) => shouldDCA)
+      .map(({ symbol }) => symbol)
+      .join(",")}`
   };
   const { id } = await client.createNotification(notification);
 
