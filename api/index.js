@@ -4,7 +4,7 @@ const cors = require("cors");
 const Sentry = require("@sentry/node");
 const Tracing = require("@sentry/tracing");
 const transformKLineData = require("./utils/transformKLineData");
-const { getKLinesAndAvgPrice } = require("./utils/getKlinesAndAvgPrice");
+const getKLinesAndAvgPrice = require("./utils/getKlinesAndAvgPrice");
 
 const PORT = process.env.PORT || 3001;
 
