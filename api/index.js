@@ -140,6 +140,7 @@ app.get("/api/best_dca", async (req, res) => {
 
     const client = new OneSignal.DefaultApi(configuration);
 
+    // https://documentation.onesignal.com/reference/push-channel-properties
     const notification = new OneSignal.Notification();
 
     notification.app_id = process.env.ONESIGNAL_APP_ID;
@@ -150,6 +151,7 @@ app.get("/api/best_dca", async (req, res) => {
     notification.contents = {
       en: message
     };
+    notification.url = "https://crypto-stdev-cra.vercel.app/best-dca";
     const { id } = await client.createNotification(notification);
   }
 
