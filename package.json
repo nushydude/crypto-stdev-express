@@ -2,7 +2,6 @@
   "name": "crypto-stdev-express",
   "version": "1.0.0",
   "description": "",
-  "type": "module",
   "main": "api/index.js",
   "engines": {
     "node": "16.17.0"
