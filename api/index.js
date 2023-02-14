@@ -110,6 +110,16 @@ app.get("/api/best_dca", async (req, res) => {
     })
   );
 
+  const DCATokens = dataInfo
+    .filter(({ shouldDCA }) => shouldDCA)
+    .map(({ symbol }) => symbol);
+
+  if (DCATokens.length === 0) {
+    return res.json({ message: "Nothing to DCA" });
+  }
+
+  const message = `Should DCA ${DCATokens.join(",")}`;
+
   const tokenProvider = {
     getToken() {
       return process.env.ONESIGNAL_REST_API_KEY;
@@ -134,14 +144,11 @@ app.get("/api/best_dca", async (req, res) => {
     en: "Crypto DCA Alert!"
   };
   notification.contents = {
-    en: `Should DCA ${dataInfo
-      .filter(({ shouldDCA }) => shouldDCA)
-      .map(({ symbol }) => symbol)
-      .join(",")}`
+    en: message
   };
   const { id } = await client.createNotification(notification);
 
-  res.json({ message: "Notification sent" });
+  res.json({ message });
 });
 
 app.get("/api/debug-sentry", (req, res) => {
