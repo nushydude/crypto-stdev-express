@@ -4,6 +4,7 @@ const cors = require("cors");
 const Sentry = require("@sentry/node");
 const Tracing = require("@sentry/tracing");
 const transformKLineData = require("./utils/transformKLineData");
+const { getKLinesAndAvgPrice } = require("./utils/getKlinesAndAvgPrice");
 
 const PORT = process.env.PORT || 3001;
 
@@ -33,21 +34,10 @@ app.use(cors());
 app.use(express.json());
 
 app.get("/api/binance_kline", async (req, res) => {
-  // req.query = { symbol, interval, limit }
-  try {
-    const [klineData, avgPrice] = await Promise.all([
-      axios.get("https://api.binance.com/api/v3/klines", {
-        params: req.query
-      }),
-      axios.get("https://api.binance.com/api/v3/avgPrice", {
-        params: { symbol: req.query.symbol }
-      })
-    ]);
+  const { symbol, interval, limit } = req.query;
 
-    const data = {
-      klineData: transformKLineData(klineData.data),
-      avgPrice: avgPrice.data
-    };
+  try {
+    const data = await getKLinesAndAvgPrice(symbol, interval, limit);
 
     return res.json(data);
   } catch (error) {
@@ -76,6 +66,29 @@ app.post("/api/settings", async (req, res) => {
 
 app.get("/api/test", (req, res) => {
   res.json({ message: "Hello from server!" });
+});
+
+app.get("/api/cron", (req, res) => {
+  const list = [
+    "BTCBUSD",
+    "ETHBUSD",
+    "AVAXBUSD",
+    "SOLBUSD",
+    "APTBUSD",
+    "RUNEBUSD",
+    "ADABUSD",
+    "SANDBUSD",
+    "FTMBUSD",
+    "DOTBUSD",
+    "NEARBUSD"
+  ];
+
+  const interval: Interval = "4h";
+  const limit = 100;
+
+  const data = Promise.all(
+    list.map((symbol) => getKLinesAndAvgPrice(symbol, interval, limit))
+  );
 });
 
 app.get("/api/debug-sentry", (req, res) => {
