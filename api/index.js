@@ -1,10 +1,10 @@
-const express = require("express");
-const axios = require("axios");
-const cors = require("cors");
-const Sentry = require("@sentry/node");
-const Tracing = require("@sentry/tracing");
-const transformKLineData = require("./utils/transformKLineData");
-const getKLinesAndAvgPrice = require("./utils/getKlinesAndAvgPrice");
+import express from "express";
+import axios from "axios";
+import cors from "cors";
+import Sentry from "@sentry/node";
+import Tracing from "@sentry/tracing";
+import { transformKLineData } from "./utils/transformKLineData.js";
+import { getKLinesAndAvgPrice } from "./utils/getKlinesAndAvgPrice.js";
 
 const PORT = process.env.PORT || 3001;
 
@@ -110,4 +110,4 @@ if (process.env.NODE_ENV !== "production") {
   });
 }
 
-module.exports = app;
+export default app;

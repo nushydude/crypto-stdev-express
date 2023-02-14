@@ -1,7 +1,7 @@
-const axios = require("axios");
-const transformKLineData = require("./transformKLineData");
+import axios from "axios";
+import { transformKLineData } from "./transformKLineData.js";
 
-const getKLinesAndAvgPrice = async (symbol, interval, limit) => {
+export const getKLinesAndAvgPrice = async (symbol, interval, limit) => {
   const [klineData, avgPrice] = await Promise.all([
     axios.get("https://api.binance.com/api/v3/klines", {
       params: { symbol, interval, limit }
@@ -18,5 +18,3 @@ const getKLinesAndAvgPrice = async (symbol, interval, limit) => {
 
   return data;
 };
-
-module.exports = getKLinesAndAvgPrice;
