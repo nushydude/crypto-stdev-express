@@ -112,41 +112,46 @@ app.get("/api/best_dca", async (req, res) => {
 
   const DCATokens = dataInfo
     .filter(({ shouldDCA }) => shouldDCA)
-    .map(({ symbol }) => symbol);
+    // sort by highest to lowest (i.e. highest *negative* value first)
+    .sort((a, b) => a.dip - b.dip);
 
   if (DCATokens.length === 0) {
     return res.json({ message: "Nothing to DCA" });
   }
 
-  const message = `Should DCA ${DCATokens.join(",")}`;
+  const message = `Should DCA ${DCATokens.map(
+    ({ symbol, dip }) => `${symbol} (${dip.toFixed(2)}%)`
+  ).join(", ")}`;
 
-  const tokenProvider = {
-    getToken() {
-      return process.env.ONESIGNAL_REST_API_KEY;
-    }
-  };
-
-  const configuration = OneSignal.createConfiguration({
-    authMethods: {
-      app_key: {
-        tokenProvider
+  if (process.env.NODE_ENV === "production") {
+    const tokenProvider = {
+      getToken() {
+        return process.env.ONESIGNAL_REST_API_KEY;
       }
-    }
-  });
+    };
 
-  const client = new OneSignal.DefaultApi(configuration);
+    const configuration = OneSignal.createConfiguration({
+      authMethods: {
+        app_key: {
+          tokenProvider
+        }
+      }
+    });
 
-  const notification = new OneSignal.Notification();
+    const client = new OneSignal.DefaultApi(configuration);
 
-  notification.app_id = process.env.ONESIGNAL_APP_ID;
-  notification.included_segments = ["Subscribed Users"];
-  notification.heading = {
-    en: "Crypto DCA Alert!"
-  };
-  notification.contents = {
-    en: message
-  };
-  const { id } = await client.createNotification(notification);
+    const notification = new OneSignal.Notification();
+
+    notification.app_id = process.env.ONESIGNAL_APP_ID;
+    notification.included_segments = ["Subscribed Users"];
+    notification.heading = {
+      en: "Crypto DCA Alert!"
+    };
+    notification.contents = {
+      en: message
+    };
+    const { id } = await client.createNotification(notification);
+  }
 
   res.json({ message });
 });
