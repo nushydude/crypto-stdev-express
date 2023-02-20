@@ -4,7 +4,7 @@ import Sentry from "@sentry/node";
 export const getLastDCAInfoFromMongo = async () => {
   const uri = `mongodb+srv://admin:${process.env.MONGO_DB_PASSWORD}@cluster0.snmvgzl.mongodb.net/?retryWrites=true&w=majority`;
 
-  let dcaInfo;
+  let dcaInfo = [];
 
   const client = new MongoClient(uri, {
     useNewUrlParser: true,
@@ -22,7 +22,9 @@ export const getLastDCAInfoFromMongo = async () => {
       .sort({ createdAt: -1 })
       .limit(1);
 
-    dcaInfo = record?.dcaInfo;
+    if (record) {
+      dcaInfo = record.dcaInfo;
+    }
   } catch (error) {
     Sentry.captureException(error);
   }

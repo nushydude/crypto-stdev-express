@@ -124,6 +124,8 @@ app.get("/api/best_dca", async (req, res) => {
 
     const previousDCAInfo = await getLastDCAInfoFromMongo();
 
+    console.log("previousDCAInfo:", JSON.stringify(previousDCAInfo, null, 2));
+
     await storeLastDCAInfoInMongo(DCATokens);
 
     // Find the diff between the last dcaInfo stored in DB vs the new one.
