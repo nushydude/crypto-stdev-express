@@ -17,7 +17,10 @@ export const getLastDCAInfoFromMongo = async () => {
 
     const dcainfosCollection = client.db("production").collection("dcainfos");
 
-    const record = await dcainfosCollection.findOne({}).sort({ _id: -1 });
+    const record = await dcainfosCollection
+      .find({})
+      .sort({ createdAt: -1 })
+      .limit(1);
 
     dcaInfo = record?.dcaInfo;
   } catch (error) {
