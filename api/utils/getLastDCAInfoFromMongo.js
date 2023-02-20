@@ -17,14 +17,14 @@ export const getLastDCAInfoFromMongo = async () => {
 
     const dcainfosCollection = client.db("production").collection("dcainfos");
 
-    const record = await dcainfosCollection
+    const [record] = await dcainfosCollection
       .find({})
       .sort({ createdAt: -1 })
       .limit(1)
       .toArray();
 
-    if (record[0]) {
-      dcaInfo = record[0].dcaInfo;
+    if (record) {
+      dcaInfo = record.dcaInfo;
     }
   } catch (error) {
     Sentry.captureException(error);
