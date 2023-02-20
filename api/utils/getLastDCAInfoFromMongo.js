@@ -20,10 +20,11 @@ export const getLastDCAInfoFromMongo = async () => {
     const record = await dcainfosCollection
       .find({})
       .sort({ createdAt: -1 })
-      .limit(1);
+      .limit(1)
+      .toArray();
 
-    if (record) {
-      dcaInfo = record.dcaInfo;
+    if (record[0]) {
+      dcaInfo = record[0].dcaInfo;
     }
   } catch (error) {
     Sentry.captureException(error);
