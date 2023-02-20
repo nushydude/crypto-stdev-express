@@ -6,13 +6,13 @@ export const getLastDCAInfoFromMongo = async () => {
 
   let dcaInfo;
 
-  try {
-    const client = new MongoClient(uri, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      serverApi: ServerApiVersion.v1
-    });
+  const client = new MongoClient(uri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverApi: ServerApiVersion.v1
+  });
 
+  try {
     await client.connect();
 
     const dcainfosCollection = client.db("production").collection("dcainfos");
