@@ -4,15 +4,15 @@ import Sentry from "@sentry/node";
 export const getLastDCAInfoFromMongo = async () => {
   const uri = `mongodb+srv://admin:${process.env.MONGO_DB_PASSWORD}@cluster0.snmvgzl.mongodb.net/?retryWrites=true&w=majority`;
 
-  const client = new MongoClient(uri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    serverApi: ServerApiVersion.v1
-  });
-
   let dcaInfo;
 
   try {
+    const client = new MongoClient(uri, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverApi: ServerApiVersion.v1
+    });
+
     await client.connect();
 
     const dcainfosCollection = client.db("production").collection("dcainfos");
