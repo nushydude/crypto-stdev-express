@@ -9,6 +9,8 @@ import { transformKLineData } from "./utils/transformKLineData.js";
 import { getKLinesAndAvgPrice } from "./utils/getKlinesAndAvgPrice.js";
 import { calculateStandardDeviation } from "./utils/calculateStandardDeviation.js";
 import { calculateMean } from "./utils/calculateMean.js";
+import { getLastDCAInfoFromMongo } from "./utils/getLastDCAInfoFromMongo.js";
+import { storeLastDCAInfoInMongo } from "./utils/storeLastDCAInfoInMongo.js";
 
 const PORT = process.env.PORT || 3001;
 
@@ -120,47 +122,21 @@ app.get("/api/best_dca", async (req, res) => {
       // sort by highest to lowest (i.e. highest *negative* value first)
       .sort((a, b) => a.dip - b.dip);
 
+    const previousDCAInfo = await getLastDCAInfoFromMongo();
+
+    await storeLastDCAInfoInMongo(dataInfo);
+
     if (DCATokens.length === 0) {
       return res.json({ message: "Nothing to DCA" });
     }
+
+    console.log("previousDCAInfo:", previousDCAInfo);
 
     message = `Should DCA ${DCATokens.map(
       ({ symbol, dip }) => `${symbol} (${dip.toFixed(2)}%)`
     ).join(", ")}`;
 
     if (process.env.NODE_ENV === "production") {
-      // official
-      // const tokenProvider = {
-      //   getToken() {
-      //     return process.env.ONESIGNAL_REST_API_KEY;
-      //   }
-      // };
-
-      // const configuration = OneSignal.createConfiguration({
-      //   authMethods: {
-      //     app_key: {
-      //       tokenProvider
-      //     }
-      //   }
-      // });
-
-      // const client = new OneSignal.DefaultApi(configuration);
-
-      // // https://documentation.onesignal.com/reference/push-channel-properties
-      // const notification = new OneSignal.Notification();
-
-      // notification.id = `CRYPTO_DCA_ALERT_${Date.now()}`;
-      // notification.app_id = process.env.ONESIGNAL_APP_ID;
-      // notification.heading = {
-      //   en: "Crypto DCA Alert!"
-      // };
-      // notification.contents = {
-      //   en: message
-      // };
-      // notification.included_segments = ["Subscribed Users"];
-      // notification.url = "https://crypto-stdev-cra.vercel.app/best-dca";
-      // notification.is_any_web = true;
-
       const client = new OneSignal.Client(
         process.env.ONESIGNAL_APP_ID,
         process.env.ONESIGNAL_REST_API_KEY
