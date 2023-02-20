@@ -1,4 +1,5 @@
 import { MongoClient, ServerApiVersion } from "mongodb";
+import Sentry from "@sentry/node";
 
 export const storeLastDCAInfoInMongo = async (dcaInfo) => {
   const uri = `mongodb+srv://admin:${process.env.MONGO_DB_PASSWORD}@cluster0.snmvgzl.mongodb.net/?retryWrites=true&w=majority`;
@@ -15,7 +16,9 @@ export const storeLastDCAInfoInMongo = async (dcaInfo) => {
     const dcainfosCollection = client.db("production").collection("dcainfos");
 
     await dcainfosCollection.insertMany([{ dcaInfo, createdAt: new Date() }]);
-  } catch (error) {}
+  } catch (error) {
+    Sentry.captureException(error);
+  }
 
   client.close();
 };

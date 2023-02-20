@@ -1,4 +1,5 @@
 import { MongoClient, ServerApiVersion } from "mongodb";
+import Sentry from "@sentry/node";
 
 export const getLastDCAInfoFromMongo = async () => {
   const uri = `mongodb+srv://admin:${process.env.MONGO_DB_PASSWORD}@cluster0.snmvgzl.mongodb.net/?retryWrites=true&w=majority`;
@@ -19,7 +20,9 @@ export const getLastDCAInfoFromMongo = async () => {
     const record = await dcainfosCollection.findOne({}).sort({ _id: -1 });
 
     dcaInfo = record?.dcaInfo;
-  } catch (error) {}
+  } catch (error) {
+    Sentry.captureException(error);
+  }
 
   client.close();
 
