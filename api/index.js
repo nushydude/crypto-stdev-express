@@ -124,7 +124,7 @@ app.get("/api/best_dca", async (req, res) => {
 
     const previousDCAInfo = await getLastDCAInfoFromMongo();
 
-    await storeLastDCAInfoInMongo(dataInfo);
+    await storeLastDCAInfoInMongo(DCATokens);
 
     if (DCATokens.length === 0) {
       return res.json({ message: "Nothing to DCA" });
