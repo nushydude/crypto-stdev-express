@@ -9,6 +9,8 @@ import { getSymbols } from "./utils/getSymbols.js";
 import { getKLinesAndAvgPrice } from "./utils/getKlinesAndAvgPrice.js";
 import { calculateStandardDeviation } from "./utils/calculateStandardDeviation.js";
 import { calculateMean } from "./utils/calculateMean.js";
+import { getLastDCAInfoFromMongo } from "./utils/getLastDCAInfoFromMongo.js";
+import { storeLastDCAInfoInMongo } from "./utils/storeLastDCAInfoInMongo.js";
 
 const PORT = process.env.PORT || 3001;
 
@@ -125,13 +127,32 @@ app.get("/api/best_dca", async (req, res) => {
       // sort by highest to lowest (i.e. highest *negative* value first)
       .sort((a, b) => a.dip - b.dip);
 
-    if (DCATokens.length === 0) {
+    const previousDCAInfo = await getLastDCAInfoFromMongo();
+
+    console.log("previousDCAInfo:", JSON.stringify(previousDCAInfo, null, 2));
+
+    await storeLastDCAInfoInMongo(DCATokens);
+
+    // Find the diff between the last dcaInfo stored in DB vs the new one.
+    // Only include the new ones
+    // 1. create a map of previousDCAInfo
+    const previousDCAInfoMap = previousDCAInfo.reduce((accum, item) => {
+      accum[item.symbol] = item.shouldDCA; // this value will always be true because we are only storing the DCA ones
+
+      return accum;
+    }, {});
+    // 2. filter out the ones in previousDCAInfoMap
+    const newDCAInfo = DCATokens.filter(
+      ({ symbol }) => !previousDCAInfoMap[symbol]
+    );
+
+    if (newDCAInfo.length === 0) {
       return res.json({ message: "Nothing to DCA" });
     }
 
-    message = `Should DCA ${DCATokens.map(
-      ({ symbol, dip }) => `${symbol} (${dip.toFixed(2)}%)`
-    ).join(", ")}`;
+    message = `Should DCA ${newDCAInfo
+      .map(({ symbol, dip }) => `${symbol} (${dip.toFixed(2)}%)`)
+      .join(", ")}`;
 
     if (process.env.NODE_ENV === "production") {
       const client = new OneSignal.Client(
