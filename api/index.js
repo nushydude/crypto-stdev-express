@@ -5,7 +5,7 @@ import Sentry from "@sentry/node";
 import Tracing from "@sentry/tracing";
 // import * as OneSignal from "@onesignal/node-onesignal";
 import * as OneSignal from "onesignal-node";
-import { transformKLineData } from "./utils/transformKLineData.js";
+import { getSymbols } from "./utils/getSymbols.js";
 import { getKLinesAndAvgPrice } from "./utils/getKlinesAndAvgPrice.js";
 import { calculateStandardDeviation } from "./utils/calculateStandardDeviation.js";
 import { calculateMean } from "./utils/calculateMean.js";
@@ -20,13 +20,13 @@ Sentry.init({
     // enable HTTP calls tracing
     new Sentry.Integrations.Http({ tracing: true }),
     // enable Express.js middleware tracing
-    new Tracing.Integrations.Express({ app })
+    new Tracing.Integrations.Express({ app }),
   ],
 
   // Set tracesSampleRate to 1.0 to capture 100%
   // of transactions for performance monitoring.
   // We recommend adjusting this value in production
-  tracesSampleRate: 1.0
+  tracesSampleRate: 1.0,
 });
 // RequestHandler creates a separate execution context using domains, so that every
 // transaction/span/breadcrumb is attached to its own Hub instance
@@ -72,6 +72,11 @@ app.get("/api/test", (req, res) => {
   res.json({ message: "Hello from server!" });
 });
 
+app.get("/api/symbols", async (req, res) => {
+  const symbols = await getSymbols();
+  res.json({ symbols });
+});
+
 app.get("/api/best_dca", async (req, res) => {
   const sdMultiplier = 1;
 
@@ -86,7 +91,7 @@ app.get("/api/best_dca", async (req, res) => {
     "SANDBUSD",
     "FTMBUSD",
     "DOTBUSD",
-    "NEARBUSD"
+    "NEARBUSD",
   ];
 
   const interval = "4h";
@@ -129,38 +134,6 @@ app.get("/api/best_dca", async (req, res) => {
     ).join(", ")}`;
 
     if (process.env.NODE_ENV === "production") {
-      // official
-      // const tokenProvider = {
-      //   getToken() {
-      //     return process.env.ONESIGNAL_REST_API_KEY;
-      //   }
-      // };
-
-      // const configuration = OneSignal.createConfiguration({
-      //   authMethods: {
-      //     app_key: {
-      //       tokenProvider
-      //     }
-      //   }
-      // });
-
-      // const client = new OneSignal.DefaultApi(configuration);
-
-      // // https://documentation.onesignal.com/reference/push-channel-properties
-      // const notification = new OneSignal.Notification();
-
-      // notification.id = `CRYPTO_DCA_ALERT_${Date.now()}`;
-      // notification.app_id = process.env.ONESIGNAL_APP_ID;
-      // notification.heading = {
-      //   en: "Crypto DCA Alert!"
-      // };
-      // notification.contents = {
-      //   en: message
-      // };
-      // notification.included_segments = ["Subscribed Users"];
-      // notification.url = "https://crypto-stdev-cra.vercel.app/best-dca";
-      // notification.is_any_web = true;
-
       const client = new OneSignal.Client(
         process.env.ONESIGNAL_APP_ID,
         process.env.ONESIGNAL_REST_API_KEY
@@ -170,14 +143,14 @@ app.get("/api/best_dca", async (req, res) => {
         id: `CRYPTO_DCA_ALERT_${Date.now()}`,
         app_id: process.env.ONESIGNAL_APP_ID,
         heading: {
-          en: "Crypto DCA Alert!"
+          en: "Crypto DCA Alert!",
         },
         contents: {
-          en: message
+          en: message,
         },
         included_segments: ["Subscribed Users"],
         url: "https://crypto-stdev-cra.vercel.app/best-dca",
-        is_any_web: true
+        is_any_web: true,
       };
 
       const response = await client.createNotification(notification);
