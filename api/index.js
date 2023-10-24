@@ -3,7 +3,6 @@ import axios from "axios";
 import cors from "cors";
 import Sentry from "@sentry/node";
 import Tracing from "@sentry/tracing";
-// import * as OneSignal from "@onesignal/node-onesignal";
 import * as OneSignal from "onesignal-node";
 import { getSymbols } from "./utils/getSymbols.js";
 import { getKLinesAndAvgPrice } from "./utils/getKlinesAndAvgPrice.js";
@@ -17,18 +16,18 @@ const PORT = process.env.PORT || 3001;
 const app = express();
 
 Sentry.init({
-  dsn: "https://27734235b776421294f22c2b7b0a1c32@o294811.ingest.sentry.io/4504262272221184",
+  dsn: process.env.SENTRY_DSN,
   integrations: [
     // enable HTTP calls tracing
     new Sentry.Integrations.Http({ tracing: true }),
     // enable Express.js middleware tracing
-    new Tracing.Integrations.Express({ app }),
+    new Tracing.Integrations.Express({ app })
   ],
 
   // Set tracesSampleRate to 1.0 to capture 100%
   // of transactions for performance monitoring.
   // We recommend adjusting this value in production
-  tracesSampleRate: 1.0,
+  tracesSampleRate: 1.0
 });
 // RequestHandler creates a separate execution context using domains, so that every
 // transaction/span/breadcrumb is attached to its own Hub instance
@@ -93,7 +92,7 @@ app.get("/api/best_dca", async (req, res) => {
     "SANDBUSD",
     "FTMBUSD",
     "DOTBUSD",
-    "NEARBUSD",
+    "NEARBUSD"
   ];
 
   const interval = "4h";
@@ -164,14 +163,14 @@ app.get("/api/best_dca", async (req, res) => {
         id: `CRYPTO_DCA_ALERT_${Date.now()}`,
         app_id: process.env.ONESIGNAL_APP_ID,
         heading: {
-          en: "Crypto DCA Alert!",
+          en: "Crypto DCA Alert!"
         },
         contents: {
-          en: message,
+          en: message
         },
         included_segments: ["Subscribed Users"],
         url: "https://crypto-stdev-cra.vercel.app/best-dca",
-        is_any_web: true,
+        is_any_web: true
       };
 
       const response = await client.createNotification(notification);
