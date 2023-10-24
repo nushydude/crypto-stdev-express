@@ -7,6 +7,7 @@ import { getSettings } from "./routes/settings.js";
 import { getStatus } from "./routes/status.js";
 import { getSymbols } from "./routes/symbols.js";
 import { getBestDCA } from "./routes/dca.js";
+import { getKlineData } from "./routes/kline.js";
 
 const PORT = process.env.PORT || 3001;
 
@@ -36,7 +37,7 @@ app.use(Sentry.Handlers.tracingHandler());
 app.use(cors());
 app.use(express.json());
 
-app.get("/api/binance_kline");
+app.get("/api/binance_kline", getKlineData);
 
 app.post("/api/settings", getSettings);
 
