@@ -1,5 +1,5 @@
 import Sentry from "@sentry/node";
-import { getKLinesAndAvgPrice } from "../utils/getKlinesAndAvgPrice.js";
+import { getKLinesAndAvgPrice } from "../utils/binance.js";
 
 export const getKlineData = async (req, res) => {
   const { symbol, interval, limit } = req.query;

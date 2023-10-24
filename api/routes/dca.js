@@ -1,10 +1,11 @@
 import Sentry from "@sentry/node";
-import { getKLinesAndAvgPrice } from "../utils/getKlinesAndAvgPrice.js";
-import { calculateStandardDeviation } from "../utils/calculateStandardDeviation.js";
-import { calculateMean } from "../utils/calculateMean.js";
-import { getLastDCAInfoFromMongo } from "../utils/getLastDCAInfoFromMongo.js";
-import { storeLastDCAInfoInMongo } from "../utils/storeLastDCAInfoInMongo.js";
-import { sentNotification } from "../utils/sentNotification.js";
+import { getKLinesAndAvgPrice } from "../utils/binance.js";
+import { calculateMean, calculateStandardDeviation } from "../utils/math.js";
+import {
+  getLastDCAInfoFromMongo,
+  storeLastDCAInfoInMongo
+} from "../utils/db.js";
+import { sentNotification } from "../utils/notification.js";
 import { getDCADataForSymbol } from "../utils/getDCADataForSymbol.js";
 
 // TODO: move to MongoDB

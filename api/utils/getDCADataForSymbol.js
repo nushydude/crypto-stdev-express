@@ -1,6 +1,5 @@
-import { getKLinesAndAvgPrice } from "./getKLinesAndAvgPrice.js";
-import { calculateStandardDeviation } from "./calculateStandardDeviation.js";
-import { calculateMean } from "./calculateMean.js";
+import { getKLinesAndAvgPrice } from "./binance.js";
+import { calculateMean, calculateStandardDeviation } from "./math.js";
 
 const SD_MULTIPLIER = 1;
 const INTERVAL = "4h";
