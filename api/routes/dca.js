@@ -1,27 +1,29 @@
-import * as OneSignal from "onesignal-node";
 import Sentry from "@sentry/node";
 import { getKLinesAndAvgPrice } from "../utils/getKlinesAndAvgPrice.js";
 import { calculateStandardDeviation } from "../utils/calculateStandardDeviation.js";
 import { calculateMean } from "../utils/calculateMean.js";
 import { getLastDCAInfoFromMongo } from "../utils/getLastDCAInfoFromMongo.js";
 import { storeLastDCAInfoInMongo } from "../utils/storeLastDCAInfoInMongo.js";
+import { sentNotification } from "../utils/sentNotification.js";
+import { getDCADataForSymbol } from "../utils/getDCADataForSymbol.js";
+
+// TODO: move to MongoDB
+const SYMBOLS_LIST = [
+  "BTCBUSD",
+  "ETHBUSD",
+  "AVAXBUSD",
+  "SOLBUSD",
+  "APTBUSD",
+  "RUNEBUSD",
+  "ADABUSD",
+  "SANDBUSD",
+  "FTMBUSD",
+  "DOTBUSD",
+  "NEARBUSD"
+];
 
 export const getBestDCA = async (req, res) => {
   const sdMultiplier = 1;
-
-  const list = [
-    "BTCBUSD",
-    "ETHBUSD",
-    "AVAXBUSD",
-    "SOLBUSD",
-    "APTBUSD",
-    "RUNEBUSD",
-    "ADABUSD",
-    "SANDBUSD",
-    "FTMBUSD",
-    "DOTBUSD",
-    "NEARBUSD"
-  ];
 
   const interval = "4h";
   const limit = 100;
@@ -30,24 +32,7 @@ export const getBestDCA = async (req, res) => {
   let message;
 
   try {
-    const dataInfo = await Promise.all(
-      list.map(async (symbol) => {
-        const { klineData, avgPrice } = await getKLinesAndAvgPrice(
-          symbol,
-          interval,
-          limit
-        );
-
-        const prices = klineData.map((d) => d.openPrice);
-        const standardDeviation = calculateStandardDeviation(prices);
-        const mean = calculateMean(prices);
-        const targetPrice = mean - sdMultiplier * standardDeviation;
-        const shouldDCA = avgPrice.price < targetPrice;
-        const dip = ((avgPrice.price - targetPrice) / targetPrice) * 100;
-
-        return { symbol, avgPrice, targetPrice, shouldDCA, dip };
-      })
-    );
+    const dataInfo = await Promise.all(SYMBOLS_LIST.map(getDCADataForSymbol));
 
     const DCATokens = dataInfo
       .filter(({ shouldDCA }) => shouldDCA)
@@ -55,8 +40,6 @@ export const getBestDCA = async (req, res) => {
       .sort((a, b) => a.dip - b.dip);
 
     const previousDCAInfo = await getLastDCAInfoFromMongo();
-
-    await storeLastDCAInfoInMongo(DCATokens);
 
     // Find the diff between the last dcaInfo stored in DB vs the new one.
     // Only include the new ones
@@ -75,33 +58,19 @@ export const getBestDCA = async (req, res) => {
       return res.json({ message: "Nothing to DCA" });
     }
 
+    await storeLastDCAInfoInMongo(DCATokens);
+
     message = `Should DCA ${newDCAInfo
       .map(({ symbol, dip }) => `${symbol} (${dip.toFixed(2)}%)`)
       .join(", ")}`;
 
     if (process.env.NODE_ENV === "production") {
-      const client = new OneSignal.Client(
-        process.env.ONESIGNAL_APP_ID,
-        process.env.ONESIGNAL_REST_API_KEY
+      id = await sentNotification(
+        `CRYPTO_DCA_ALERT_${Date.now()}`,
+        "Crypto DCA Alert!",
+        message,
+        ["Subscribed Users"]
       );
-
-      const notification = {
-        id: `CRYPTO_DCA_ALERT_${Date.now()}`,
-        app_id: process.env.ONESIGNAL_APP_ID,
-        heading: {
-          en: "Crypto DCA Alert!"
-        },
-        contents: {
-          en: message
-        },
-        included_segments: ["Subscribed Users"],
-        url: "https://crypto-stdev-cra.vercel.app/best-dca",
-        is_any_web: true
-      };
-
-      const response = await client.createNotification(notification);
-
-      id = response.body.id;
     }
   } catch (error) {
     Sentry.captureException(error);
