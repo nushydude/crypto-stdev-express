@@ -1,12 +1,10 @@
 import Sentry from "@sentry/node";
-import { getKLinesAndAvgPrice } from "../utils/binance.js";
-import { calculateMean, calculateStandardDeviation } from "../utils/math.js";
 import {
   getLastDCAInfoFromMongo,
   storeLastDCAInfoInMongo
 } from "../utils/db.js";
 import { sentNotification } from "../utils/notification.js";
-import { getDCADataForSymbol } from "../utils/getDCADataForSymbol.js";
+import { getDCADataForSymbol } from "../utils/binance.js";
 
 // TODO: move to MongoDB
 const SYMBOLS_LIST = [
@@ -23,17 +21,20 @@ const SYMBOLS_LIST = [
   "NEARBUSD"
 ];
 
+const INTERVAL = "4h";
+const LIMIT = 100;
+
+// This is currently called by a cron hourly which is set up on cron-job.org.
 export const getBestDCA = async (req, res) => {
   const sdMultiplier = 1;
-
-  const interval = "4h";
-  const limit = 100;
 
   let id;
   let message;
 
   try {
-    const dataInfo = await Promise.all(SYMBOLS_LIST.map(getDCADataForSymbol));
+    const dataInfo = await Promise.all(
+      SYMBOLS_LIST.map((symbol) => getDCADataForSymbol(symbol, INTERVAL, LIMIT))
+    );
 
     const DCATokens = dataInfo
       .filter(({ shouldDCA }) => shouldDCA)
