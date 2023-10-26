@@ -1,5 +1,5 @@
 import axios from "axios";
-import { transformKLineData } from "./transformKLineData.js";
+import { transformKLineData } from "./transforms.js";
 
 export const getKLinesAndAvgPrice = async (symbol, interval, limit) => {
   const [klineData, avgPrice] = await Promise.all([

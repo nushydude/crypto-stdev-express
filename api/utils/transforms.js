@@ -3,15 +3,15 @@ export const transformKLineData = (data) => {
     const [
       openTime,
       openPrice,
-      highPrice,
-      lowPrice,
-      closePrice,
-      volume,
-      closeTime,
-      quoteAssetVolume,
-      numTrades,
-      takerBuyBaseAssetVolume,
-      takerBuyQuoteAssetVolume
+      volume
+      // highPrice,
+      // lowPrice,
+      // closePrice,
+      // closeTime,
+      // quoteAssetVolume,
+      // numTrades,
+      // takerBuyBaseAssetVolume,
+      // takerBuyQuoteAssetVolume
     ] = candleStickData;
 
     return {
