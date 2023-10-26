@@ -1,12 +1,12 @@
 import { MongoClient, ServerApiVersion } from "mongodb";
 import Sentry from "@sentry/node";
 
-export const getLastDCAInfoFromMongo = async () => {
-  const uri = `mongodb+srv://admin:${process.env.MONGO_DB_PASSWORD}@cluster0.snmvgzl.mongodb.net/?retryWrites=true&w=majority`;
+const DCA_INFO_COLLECTION_NAME = "dcainfos";
 
+export const getLastDCAInfoFromMongo = async () => {
   let dcaInfo = [];
 
-  const client = new MongoClient(uri, {
+  const client = new MongoClient(process.env.DB_CONNECTION_STRING, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     serverApi: ServerApiVersion.v1
@@ -15,7 +15,9 @@ export const getLastDCAInfoFromMongo = async () => {
   try {
     await client.connect();
 
-    const dcainfosCollection = client.db("production").collection("dcainfos");
+    const dcainfosCollection = client
+      .db(process.env.DB_NAME)
+      .collection(DCA_INFO_COLLECTION_NAME);
 
     const [record] = await dcainfosCollection
       .find({})
@@ -36,9 +38,7 @@ export const getLastDCAInfoFromMongo = async () => {
 };
 
 export const storeLastDCAInfoInMongo = async (dcaInfo) => {
-  const uri = `mongodb+srv://admin:${process.env.MONGO_DB_PASSWORD}@cluster0.snmvgzl.mongodb.net/?retryWrites=true&w=majority`;
-
-  const client = new MongoClient(uri, {
+  const client = new MongoClient(process.env.DB_CONNECTION_STRING, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     serverApi: ServerApiVersion.v1
@@ -47,7 +47,9 @@ export const storeLastDCAInfoInMongo = async (dcaInfo) => {
   try {
     await client.connect();
 
-    const dcainfosCollection = client.db("production").collection("dcainfos");
+    const dcainfosCollection = client
+      .db(process.env.DB_NAME)
+      .collection(DCA_INFO_COLLECTION_NAME);
 
     await dcainfosCollection.insertMany([{ dcaInfo, createdAt: new Date() }]);
   } catch (error) {
