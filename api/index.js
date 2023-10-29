@@ -2,6 +2,8 @@ import express from "express";
 import cors from "cors";
 import Sentry from "@sentry/node";
 import Tracing from "@sentry/tracing";
+import dotenv from "dotenv";
+
 import { getSettings } from "./routes/settings.js";
 import { getSymbols } from "./routes/symbols.js";
 import { getBestDCA } from "./routes/dca.js";
@@ -12,6 +14,8 @@ import {
   logOut,
   signUp,
 } from "./routes/auth.js";
+
+dotenv.config();
 
 const PORT = process.env.PORT || 3001;
 
