@@ -2,6 +2,7 @@ import { MongoClient, ServerApiVersion } from "mongodb";
 import Sentry from "@sentry/node";
 import isEmail from "validator/lib/isEmail.js";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
 
 const DCA_INFO_COLLECTION_NAME = "dcainfos";
 const ACCESS_TOKEN_EXPIRY = "1h";
@@ -55,7 +56,7 @@ export const storeLastDCAInfoInMongo = async (dcaInfo) => {
       .db(process.env.DB_NAME)
       .collection(DCA_INFO_COLLECTION_NAME);
 
-    await dcainfosCollection.insertMany([{ dcaInfo, createdAt: new Date() }]);
+    await dcainfosCollection.insertOne({ dcaInfo, createdAt: new Date() });
   } catch (error) {
     Sentry.captureException(error);
   }
@@ -102,26 +103,26 @@ export const signUpWithEmail = async (firstname, lastname, email, password) => {
     const usersCollection = client.db(process.env.DB_NAME).collection("users");
 
     // insert user to users collection
-    const user = await usersCollection.insertMany([
-      {
-        firstname,
-        lastname,
-        email: email.toLowerCase(),
-        hashedPassword,
-        createdAt: new Date(),
-      },
-    ]);
+    const result = await usersCollection.insertOne({
+      firstname,
+      lastname,
+      email: email.toLowerCase(),
+      hashedPassword,
+      createdAt: new Date(),
+    });
+
+    const userId = result.insertedId;
 
     // generate access token
     accessToken = jwt.sign(
-      { userId: user._id.toString() },
+      { userId: userId.toString() },
       process.env.JWT_SECRET_ACCESS_TOKEN,
       { expiresIn: ACCESS_TOKEN_EXPIRY }
     );
 
     // generate refresh token
     refreshToken = jwt.sign(
-      { userId: user._id.toString() },
+      { userId: userId.toString() },
       process.env.JWT_SECRET_REFRESH_TOKEN,
       { expiresIn: REFRESH_TOKEN_EXPIRY }
     );
@@ -131,9 +132,10 @@ export const signUpWithEmail = async (firstname, lastname, email, password) => {
       .db(process.env.DB_NAME)
       .collection("refreshtokens");
 
-    await refreshtokensCollection.insertMany([
-      { userId: user._id.toString(), refreshToken },
-    ]);
+    await refreshtokensCollection.insertOne({
+      userId,
+      refreshToken,
+    });
   } catch (error) {
     Sentry.captureException(error);
 
@@ -212,9 +214,10 @@ export const logInWithEmail = async (email, password) => {
       .db(process.env.DB_NAME)
       .collection("refreshtokens");
 
-    await refreshtokensCollection.insertMany([
-      { userId: user._id.toString(), refreshToken },
-    ]);
+    await refreshtokensCollection.insertOne({
+      userId: user._id.toString(),
+      refreshToken,
+    });
   } catch (error) {
     Sentry.captureException(error);
 
