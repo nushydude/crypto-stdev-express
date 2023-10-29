@@ -182,17 +182,20 @@ export const logInWithEmail = async (email, password) => {
 
     const usersCollection = client.db(process.env.DB_NAME).collection("users");
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-
     // find user in users collection
     const user = await usersCollection.findOne({
       email: email.toLowerCase(),
-      hashedPassword,
     });
+
+    console.log("user:", user);
 
     if (user === null) {
       // TODO: define custom error
       throw new Error("User not found");
+    }
+
+    if (!(await bcrypt.compare(password, user.hashedPassword))) {
+      throw new Error("Invalid password");
     }
 
     // generate access token
