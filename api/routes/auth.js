@@ -3,6 +3,7 @@ import {
   logInWithEmail,
   generateNewAccessTokenFromRefreshToken,
   deleteRefreshToken,
+  sendResetPasswordEmailToUser
 } from "../utils/db.js";
 
 export const signUp = async (req, res) => {
@@ -59,5 +60,14 @@ export const logOut = async (req, res) => {
     return res.status(400).json({ errorMessage });
   }
 
+  return res.status(204).send();
+};
+
+export const sendResetPasswordEmail = async (req, res) => {
+  const { email } = req.body;
+
+  await sendResetPasswordEmailToUser(email);
+
+  // We don't want to send a specfic message for security reasons.
   return res.status(204).send();
 };

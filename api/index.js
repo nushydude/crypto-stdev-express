@@ -9,7 +9,8 @@ import {
   generateNewAccessToken,
   logIn,
   logOut,
-  signUp,
+  sendResetPasswordEmail,
+  signUp
 } from "./routes/auth.js";
 import { validateBearerToken } from "./middleware/index.js";
 import { getPortfolio } from "./routes/user.js";
@@ -26,13 +27,13 @@ Sentry.init({
     // enable HTTP calls tracing
     new Sentry.Integrations.Http({ tracing: true }),
     // enable Express.js middleware tracing
-    new Tracing.Integrations.Express({ app }),
+    new Tracing.Integrations.Express({ app })
   ],
 
   // Set tracesSampleRate to 1.0 to capture 100%
   // of transactions for performance monitoring.
   // We recommend adjusting this value in production
-  tracesSampleRate: 1.0,
+  tracesSampleRate: 1.0
 });
 
 // RequestHandler creates a separate execution context using domains, so that every
@@ -58,6 +59,7 @@ app.post("/api/user", signUp);
 app.post("/api/auth/login", logIn);
 app.post("/api/auth/logout", logOut);
 app.post("/api/auth/refresh", generateNewAccessToken);
+app.post("/api/auth/forgot", sendResetPasswordEmail);
 
 app.get("/api/portfolio", validateBearerToken, getPortfolio);
 

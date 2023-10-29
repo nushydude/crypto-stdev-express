@@ -1,4 +1,6 @@
 import * as OneSignal from "onesignal-node";
+import nodemailer from "nodemailer";
+import Sentry from "@sentry/node";
 
 export const sentNotification = async (id, heading, message, segments) => {
   const client = new OneSignal.Client(
@@ -23,4 +25,31 @@ export const sentNotification = async (id, heading, message, segments) => {
   const response = await client.createNotification(notification);
 
   return response.body.id;
+};
+
+export const sendEmail = ({ toAddress, subject, messageLines }) => {
+  const transporter = nodemailer.createTransport({
+    service: process.env.EMAIL_SERVICE,
+    auth: {
+      user: process.env.EMAIL_ADDRESS,
+      pass: process.env.EMAIL_PASSWORD
+    }
+  });
+
+  const mailOptions = {
+    from: "Crypto DCA Plan using Statistics App",
+    to: toAddress,
+    subject,
+    text: messageLines.join("\n\n")
+  };
+
+  return new Promise((resolve, reject) => {
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        reject(error);
+      } else {
+        resolve();
+      }
+    });
+  });
 };
