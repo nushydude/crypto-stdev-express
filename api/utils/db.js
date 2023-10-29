@@ -1,6 +1,6 @@
 import { MongoClient, ServerApiVersion } from "mongodb";
 import Sentry from "@sentry/node";
-import * as validator from "validator";
+import isEmail from "validator/lib/isEmail.js";
 import jwt from "jsonwebtoken";
 
 const DCA_INFO_COLLECTION_NAME = "dcainfos";
@@ -64,11 +64,23 @@ export const storeLastDCAInfoInMongo = async (dcaInfo) => {
 };
 
 export const signUpWithEmail = async (firstname, lastname, email, password) => {
-  if (validator.isEmail(email) === false) {
+  if (!firstname) {
+    // TODO: define custom error
+    throw new Error("First name is required");
+  }
+
+  if (!lastname.length) {
+    // TODO: define custom error
+    throw new Error("Last name is required");
+  }
+
+  if (isEmail(email) === false) {
+    // TODO: define custom error
     throw new Error("Invalid email address");
   }
 
   if (password.length < 8) {
+    // TODO: define custom error
     throw new Error("Password must be at least 8 characters");
   }
 
@@ -91,7 +103,13 @@ export const signUpWithEmail = async (firstname, lastname, email, password) => {
 
     // insert user to users collection
     const user = await usersCollection.insertMany([
-      { firstname, lastname, email, hashedPassword, createdAt: new Date() },
+      {
+        firstname,
+        lastname,
+        email: email.toLowerCase(),
+        hashedPassword,
+        createdAt: new Date(),
+      },
     ]);
 
     // generate access token
@@ -119,9 +137,17 @@ export const signUpWithEmail = async (firstname, lastname, email, password) => {
   } catch (error) {
     Sentry.captureException(error);
 
-    // extract to
+    // extract to functions
     if (error.code === 11000) {
       errorMessage = "Email address already exists";
+    } else if (error.message === "First name is required") {
+      errorMessage = "First name is required";
+    } else if (error.message === "Last name is required") {
+      errorMessage = "Last name is required";
+    } else if (error.message === "Invalid email address") {
+      errorMessage = "Invalid email address";
+    } else if (error.message === "Password must be at least 8 characters") {
+      errorMessage = "Password must be at least 8 characters";
     } else {
       errorMessage = "Unknown error";
     }
@@ -144,6 +170,12 @@ export const logInWithEmail = async (email, password) => {
   let errorMessage;
 
   try {
+    if (!isEmail(email)) {
+      throw new Error("Invalid email address");
+    } else if (!password || password.length < 8) {
+      throw new Error("Invalid password");
+    }
+
     await client.connect();
 
     const usersCollection = client.db(process.env.DB_NAME).collection("users");
@@ -151,9 +183,13 @@ export const logInWithEmail = async (email, password) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // find user in users collection
-    const user = await usersCollection.findOne({ email, hashedPassword });
+    const user = await usersCollection.findOne({
+      email: email.toLowerCase(),
+      hashedPassword,
+    });
 
     if (user === null) {
+      // TODO: define custom error
       throw new Error("User not found");
     }
 
@@ -185,6 +221,10 @@ export const logInWithEmail = async (email, password) => {
     // TODO: define custom errors
     if (error.message === "User not found") {
       errorMessage = "Invalid email or password";
+    } else if (error.message === "Invalid email address") {
+      errorMessage = "Invalid email or password";
+    } else if (error.message === "Invalid password") {
+      errorMessage = "Invalid email or password";
     } else {
       errorMessage = "Unknown error";
     }
@@ -215,6 +255,7 @@ export const generateNewAccessTokenFromRefreshToken = async (refreshToken) => {
     });
 
     if (refreshTokenRecord === null) {
+      // TODO: define custom error
       throw new Error("Refresh token not found");
     }
 
@@ -264,6 +305,7 @@ export const deleteRefreshToken = async (refreshToken) => {
     });
 
     if (refreshTokenRecord === null) {
+      // TODO: define custom error
       throw new Error("Refresh token not found");
     }
 
