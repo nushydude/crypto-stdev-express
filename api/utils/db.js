@@ -187,8 +187,6 @@ export const logInWithEmail = async (email, password) => {
       email: email.toLowerCase(),
     });
 
-    console.log("user:", user);
-
     if (user === null) {
       // TODO: define custom error
       throw new Error("User not found");
@@ -243,6 +241,7 @@ export const logInWithEmail = async (email, password) => {
 
 export const generateNewAccessTokenFromRefreshToken = async (refreshToken) => {
   let accessToken;
+  let errorMessage;
 
   // check if the refresh token is in the refreshtokens collection
   const client = new MongoClient(process.env.DB_CONNECTION_STRING, {
@@ -316,7 +315,7 @@ export const deleteRefreshToken = async (refreshToken) => {
     }
 
     // delete the refresh token from refreshtokens collection
-    await refreshtokensCollection.deleteOne({ refreshtokens });
+    await refreshtokensCollection.deleteOne({ refreshToken });
   } catch (error) {
     Sentry.captureException(error);
 

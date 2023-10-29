@@ -55,5 +55,9 @@ export const logOut = async (req, res) => {
 
   const { errorMessage } = await deleteRefreshToken(refreshToken);
 
-  return res.json({ errorMessage });
+  if (errorMessage) {
+    return res.status(400).json({ errorMessage });
+  }
+
+  return res.status(204).send();
 };
