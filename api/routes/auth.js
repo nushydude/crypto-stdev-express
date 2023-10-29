@@ -3,7 +3,7 @@ import {
   logInWithEmail,
   generateNewAccessTokenFromRefreshToken,
   deleteRefreshToken,
-  sendResetPasswordEmailToUser
+  sendResetPasswordEmailToUser,
 } from "../utils/db.js";
 
 export const signUp = async (req, res) => {

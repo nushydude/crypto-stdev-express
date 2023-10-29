@@ -15,7 +15,7 @@ export const getLastDCAInfoFromMongo = async () => {
   const client = new MongoClient(process.env.DB_CONNECTION_STRING, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    serverApi: ServerApiVersion.v1
+    serverApi: ServerApiVersion.v1,
   });
 
   try {
@@ -47,7 +47,7 @@ export const storeLastDCAInfoInMongo = async (dcaInfo) => {
   const client = new MongoClient(process.env.DB_CONNECTION_STRING, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    serverApi: ServerApiVersion.v1
+    serverApi: ServerApiVersion.v1,
   });
 
   try {
@@ -89,7 +89,7 @@ export const signUpWithEmail = async (firstname, lastname, email, password) => {
   const client = new MongoClient(process.env.DB_CONNECTION_STRING, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    serverApi: ServerApiVersion.v1
+    serverApi: ServerApiVersion.v1,
   });
 
   let accessToken;
@@ -109,7 +109,7 @@ export const signUpWithEmail = async (firstname, lastname, email, password) => {
       lastname,
       email: email.toLowerCase(),
       hashedPassword,
-      createdAt: new Date()
+      createdAt: new Date(),
     });
 
     const userId = result.insertedId;
@@ -135,7 +135,7 @@ export const signUpWithEmail = async (firstname, lastname, email, password) => {
 
     await refreshtokensCollection.insertOne({
       userId,
-      refreshToken
+      refreshToken,
     });
   } catch (error) {
     Sentry.captureException(error);
@@ -165,7 +165,7 @@ export const logInWithEmail = async (email, password) => {
   const client = new MongoClient(process.env.DB_CONNECTION_STRING, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    serverApi: ServerApiVersion.v1
+    serverApi: ServerApiVersion.v1,
   });
 
   let accessToken;
@@ -185,7 +185,7 @@ export const logInWithEmail = async (email, password) => {
 
     // find user in users collection
     const user = await usersCollection.findOne({
-      email: email.toLowerCase()
+      email: email.toLowerCase(),
     });
 
     if (user === null) {
@@ -218,7 +218,7 @@ export const logInWithEmail = async (email, password) => {
 
     await refreshtokensCollection.insertOne({
       userId: user._id.toString(),
-      refreshToken
+      refreshToken,
     });
   } catch (error) {
     Sentry.captureException(error);
@@ -248,7 +248,7 @@ export const generateNewAccessTokenFromRefreshToken = async (refreshToken) => {
   const client = new MongoClient(process.env.DB_CONNECTION_STRING, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    serverApi: ServerApiVersion.v1
+    serverApi: ServerApiVersion.v1,
   });
 
   const refreshtokensCollection = client
@@ -257,7 +257,7 @@ export const generateNewAccessTokenFromRefreshToken = async (refreshToken) => {
 
   try {
     const refreshTokenRecord = await refreshtokensCollection.findOne({
-      refreshToken
+      refreshToken,
     });
 
     if (refreshTokenRecord === null) {
@@ -271,7 +271,7 @@ export const generateNewAccessTokenFromRefreshToken = async (refreshToken) => {
     );
 
     accessToken = jwt.sign({ userId }, process.env.JWT_SECRET_ACCESS_TOKEN, {
-      expiresIn: "1h"
+      expiresIn: "1h",
     });
   } catch (error) {
     Sentry.captureException(error);
@@ -298,7 +298,7 @@ export const deleteRefreshToken = async (refreshToken) => {
   const client = new MongoClient(process.env.DB_CONNECTION_STRING, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    serverApi: ServerApiVersion.v1
+    serverApi: ServerApiVersion.v1,
   });
 
   const refreshtokensCollection = client
@@ -307,7 +307,7 @@ export const deleteRefreshToken = async (refreshToken) => {
 
   try {
     const refreshTokenRecord = await refreshtokensCollection.findOne({
-      refreshToken
+      refreshToken,
     });
 
     if (refreshTokenRecord === null) {
@@ -335,7 +335,7 @@ export const sendResetPasswordEmailToUser = async (email) => {
   const client = new MongoClient(process.env.DB_CONNECTION_STRING, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    serverApi: ServerApiVersion.v1
+    serverApi: ServerApiVersion.v1,
   });
 
   const usersCollection = client.db(process.env.DB_NAME).collection("users");
@@ -347,28 +347,26 @@ export const sendResetPasswordEmailToUser = async (email) => {
       throw new Error("User not found");
     }
 
-    const { email, firstname } = user;
-
     // generate reset password token
     const resetPasswordToken = jwt.sign(
-      { email },
+      { email: user._id.toString() },
       process.env.JWT_SECRET_RESET_PASSWORD_TOKEN,
       { expiresIn: "1h" }
     );
 
     // send email to user
     await sendEmail({
-      toAddress: email,
+      toAddress: user.email,
       subject: "Reset password",
       messageLines: [
-        `Hello ${firstname},`,
+        `Hello ${user.firstname},`,
         "We received a request to reset your password.",
         "Please click the link below to reset your password.",
-        `https://crypto-stdev-cra.vercel.app/reset-password?token=${resetPasswordToken}`,
+        `https://crypto-stdev-cra.vercel.app/auth/reset?token=${resetPasswordToken}`,
         "If you did not request to reset your password, please ignore this email.",
         "Warm regards,",
-        "Crypto DCA Plan using Statistics App team"
-      ]
+        "Crypto DCA Plan using Statistics App team",
+      ],
     });
   } catch (error) {
     Sentry.captureException(error);

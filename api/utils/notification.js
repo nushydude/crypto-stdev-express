@@ -12,14 +12,14 @@ export const sentNotification = async (id, heading, message, segments) => {
     id,
     app_id: process.env.ONESIGNAL_APP_ID,
     heading: {
-      en: heading
+      en: heading,
     },
     contents: {
-      en: message
+      en: message,
     },
     included_segments: segments,
     url: "https://crypto-stdev-cra.vercel.app/best-dca",
-    is_any_web: true
+    is_any_web: true,
   };
 
   const response = await client.createNotification(notification);
@@ -32,15 +32,15 @@ export const sendEmail = ({ toAddress, subject, messageLines }) => {
     service: process.env.EMAIL_SERVICE,
     auth: {
       user: process.env.EMAIL_ADDRESS,
-      pass: process.env.EMAIL_PASSWORD
-    }
+      pass: process.env.EMAIL_PASSWORD,
+    },
   });
 
   const mailOptions = {
-    from: "Crypto DCA Plan using Statistics App",
+    from: process.env.EMAIL_ADDRESS,
     to: toAddress,
     subject,
-    text: messageLines.join("\n\n")
+    text: messageLines.join("\n\n"),
   };
 
   return new Promise((resolve, reject) => {
