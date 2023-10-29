@@ -1,13 +1,17 @@
 import express from "express";
-import axios from "axios";
 import cors from "cors";
 import Sentry from "@sentry/node";
 import Tracing from "@sentry/tracing";
 import { getSettings } from "./routes/settings.js";
-import { getStatus } from "./routes/status.js";
 import { getSymbols } from "./routes/symbols.js";
 import { getBestDCA } from "./routes/dca.js";
 import { getKlineData } from "./routes/kline.js";
+import {
+  generateNewAccessToken,
+  logIn,
+  logOut,
+  signUp,
+} from "./routes/auth.js";
 
 const PORT = process.env.PORT || 3001;
 
@@ -19,13 +23,13 @@ Sentry.init({
     // enable HTTP calls tracing
     new Sentry.Integrations.Http({ tracing: true }),
     // enable Express.js middleware tracing
-    new Tracing.Integrations.Express({ app })
+    new Tracing.Integrations.Express({ app }),
   ],
 
   // Set tracesSampleRate to 1.0 to capture 100%
   // of transactions for performance monitoring.
   // We recommend adjusting this value in production
-  tracesSampleRate: 1.0
+  tracesSampleRate: 1.0,
 });
 
 // RequestHandler creates a separate execution context using domains, so that every
@@ -37,15 +41,20 @@ app.use(Sentry.Handlers.tracingHandler());
 app.use(cors());
 app.use(express.json());
 
+app.get("/api/status", (req, res) => res.send("OK"));
+
 app.get("/api/binance_kline", getKlineData);
 
 app.post("/api/settings", getSettings);
 
-app.get("/api/status", getStatus);
-
 app.get("/api/symbols", getSymbols);
 
 app.get("/api/best_dca", getBestDCA);
+
+app.post("/api/user", signUp);
+app.post("/api/auth/login", logIn);
+app.post("/api/auth/logout", logOut);
+app.post("/api/auth/refresh", generateNewAccessToken);
 
 app.use(Sentry.Handlers.errorHandler());
 
