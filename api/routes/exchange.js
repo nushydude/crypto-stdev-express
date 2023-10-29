@@ -1,13 +1,14 @@
 import Sentry from "@sentry/node";
+import axios from "axios";
+import { getKLinesAndAvgPrice, getDCADataForSymbol } from "../utils/binance.js";
 import {
   getLastDCAInfoFromMongo,
-  storeLastDCAInfoInMongo
+  storeLastDCAInfoInMongo,
 } from "../utils/db.js";
 import { sentNotification } from "../utils/notification.js";
-import { getDCADataForSymbol } from "../utils/binance.js";
 
 // TODO: move to MongoDB
-const SYMBOLS_LIST = [
+const BEST_DCA_SYMBOLS_LIST = [
   "BTCBUSD",
   "ETHBUSD",
   "AVAXBUSD",
@@ -18,22 +19,37 @@ const SYMBOLS_LIST = [
   "SANDBUSD",
   "FTMBUSD",
   "DOTBUSD",
-  "NEARBUSD"
+  "NEARBUSD",
 ];
 
-const INTERVAL = "4h";
-const LIMIT = 100;
+const BEST_DCA_INTERVAL = "4h";
+const BEST_DCA_LIMIT = 100;
+
+export const getKlineData = async (req, res) => {
+  const { symbol, interval, limit } = req.query;
+
+  try {
+    // TODO: use redis cache with a timeout of 1 minute
+    const data = await getKLinesAndAvgPrice(symbol, interval, limit);
+
+    return res.json(data);
+  } catch (error) {
+    Sentry.captureException(error);
+  }
+
+  return res.send([]);
+};
 
 // This is currently called by a cron hourly which is set up on cron-job.org.
 export const getBestDCA = async (req, res) => {
-  const sdMultiplier = 1;
-
   let id;
   let message;
 
   try {
     const dataInfo = await Promise.all(
-      SYMBOLS_LIST.map((symbol) => getDCADataForSymbol(symbol, INTERVAL, LIMIT))
+      BEST_DCA_SYMBOLS_LIST.map((symbol) =>
+        getDCADataForSymbol(symbol, BEST_DCA_INTERVAL, BEST_DCA_LIMIT)
+      )
     );
 
     const DCATokens = dataInfo
@@ -79,4 +95,14 @@ export const getBestDCA = async (req, res) => {
   }
 
   res.json({ id, message });
+};
+
+export const getSymbols = async (req, res) => {
+  const exchangeInfo = await axios.get(
+    "https://api.binance.com/api/v3/exchangeInfo"
+  );
+
+  const symbols = await exchangeInfo.data.symbols.map(({ symbol }) => symbol);
+
+  res.json({ symbols });
 };

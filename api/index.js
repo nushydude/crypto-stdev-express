@@ -3,17 +3,16 @@ import cors from "cors";
 import Sentry from "@sentry/node";
 import Tracing from "@sentry/tracing";
 import dotenv from "dotenv";
-
 import { getSettings } from "./routes/settings.js";
-import { getSymbols } from "./routes/symbols.js";
-import { getBestDCA } from "./routes/dca.js";
-import { getKlineData } from "./routes/kline.js";
+import { getKlineData, getBestDCA, getSymbols } from "./routes/exchange.js";
 import {
   generateNewAccessToken,
   logIn,
   logOut,
   signUp,
 } from "./routes/auth.js";
+import { validateBearerToken } from "./middleware/index.js";
+import { getPortfolio } from "./routes/user.js";
 
 dotenv.config();
 
@@ -59,6 +58,8 @@ app.post("/api/user", signUp);
 app.post("/api/auth/login", logIn);
 app.post("/api/auth/logout", logOut);
 app.post("/api/auth/refresh", generateNewAccessToken);
+
+app.get("/api/portfolio", validateBearerToken, getPortfolio);
 
 app.use(Sentry.Handlers.errorHandler());
 
