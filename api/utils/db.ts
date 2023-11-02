@@ -13,8 +13,6 @@ export const getLastDCAInfoFromMongo = async () => {
   let dcaInfo = [];
 
   const client = new MongoClient(process.env.DB_CONNECTION_STRING, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
     serverApi: ServerApiVersion.v1,
   });
 
@@ -45,8 +43,6 @@ export const getLastDCAInfoFromMongo = async () => {
 
 export const storeLastDCAInfoInMongo = async (dcaInfo) => {
   const client = new MongoClient(process.env.DB_CONNECTION_STRING, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
     serverApi: ServerApiVersion.v1,
   });
 
@@ -87,8 +83,6 @@ export const signUpWithEmail = async (firstname, lastname, email, password) => {
   }
 
   const client = new MongoClient(process.env.DB_CONNECTION_STRING, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
     serverApi: ServerApiVersion.v1,
   });
 
@@ -163,8 +157,6 @@ export const signUpWithEmail = async (firstname, lastname, email, password) => {
 
 export const logInWithEmail = async (email, password) => {
   const client = new MongoClient(process.env.DB_CONNECTION_STRING, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
     serverApi: ServerApiVersion.v1,
   });
 
@@ -246,8 +238,6 @@ export const generateNewAccessTokenFromRefreshToken = async (refreshToken) => {
 
   // check if the refresh token is in the refreshtokens collection
   const client = new MongoClient(process.env.DB_CONNECTION_STRING, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
     serverApi: ServerApiVersion.v1,
   });
 
@@ -296,8 +286,6 @@ export const deleteRefreshToken = async (refreshToken) => {
 
   // check if the refresh token is in the refreshtokens collection
   const client = new MongoClient(process.env.DB_CONNECTION_STRING, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
     serverApi: ServerApiVersion.v1,
   });
 
@@ -333,8 +321,6 @@ export const deleteRefreshToken = async (refreshToken) => {
 export const sendResetPasswordEmailToUser = async (email) => {
   // find user from DB
   const client = new MongoClient(process.env.DB_CONNECTION_STRING, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
     serverApi: ServerApiVersion.v1,
   });
 

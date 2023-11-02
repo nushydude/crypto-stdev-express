@@ -8,8 +8,9 @@
     "node": ">=16.17.0"
   },
   "scripts": {
-    "start": "node api/index.js",
-    "dev": "nodemon api/index.js",
+    "build": "tsc",
+    "start": "ts-node --esm api/index.ts",
+    "dev": "ts-node --esm api/index.ts",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "author": "",
@@ -27,11 +28,17 @@
     "nodemailer": "^6.9.7",
     "onesignal-node": "^3.4.0",
     "query-string": "^7.1.1",
+    "typescript": "^5.2.2",
     "validator": "^13.11.0"
   },
   "devDependencies": {
+    "@types/express": "^4.17.20",
+    "@types/node": "^20.8.10",
     "dotenv": "^16.3.1",
     "jest": "^29.7.0",
-    "nodemon": "^2.0.20"
+    "nodemon": "^2.0.20",
+    "pre-commit": "^1.2.2",
+    "rimraf": "^5.0.5",
+    "ts-node": "^10.9.1"
   }
 }

@@ -1,6 +1,5 @@
 import * as OneSignal from "onesignal-node";
 import nodemailer from "nodemailer";
-import Sentry from "@sentry/node";
 
 export const sentNotification = async (id, heading, message, segments) => {
   const client = new OneSignal.Client(
@@ -48,7 +47,7 @@ export const sendEmail = ({ toAddress, subject, messageLines }) => {
       if (error) {
         reject(error);
       } else {
-        resolve();
+        resolve(undefined);
       }
     });
   });
