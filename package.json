@@ -9,7 +9,7 @@
   },
   "scripts": {
     "start": "ts-node --esm api/index.ts",
-    "dev": "ts-node --esm api/index.ts",
+    "dev": "nodemon --esm api/index.ts",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "author": "",
