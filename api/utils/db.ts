@@ -10,7 +10,15 @@ const ACCESS_TOKEN_EXPIRY = "1h";
 const REFRESH_TOKEN_EXPIRY = "7d";
 
 export const getLastDCAInfoFromMongo = async () => {
-  let dcaInfo = [];
+  let dcaInfo: Array<{
+    symbol: string;
+    avgPrice: {
+      price: number;
+    };
+    targetPrice: number;
+    shouldDCA: boolean;
+    dip: number;
+  }> = [];
 
   const client = new MongoClient(process.env.DB_CONNECTION_STRING, {
     serverApi: ServerApiVersion.v1,
@@ -41,7 +49,17 @@ export const getLastDCAInfoFromMongo = async () => {
   return dcaInfo;
 };
 
-export const storeLastDCAInfoInMongo = async (dcaInfo) => {
+export const storeLastDCAInfoInMongo = async (
+  dcaInfo: Array<{
+    symbol: string;
+    avgPrice: {
+      price: number;
+    };
+    targetPrice: number;
+    shouldDCA: boolean;
+    dip: number;
+  }>
+) => {
   const client = new MongoClient(process.env.DB_CONNECTION_STRING, {
     serverApi: ServerApiVersion.v1,
   });
@@ -61,7 +79,12 @@ export const storeLastDCAInfoInMongo = async (dcaInfo) => {
   client.close();
 };
 
-export const signUpWithEmail = async (firstname, lastname, email, password) => {
+export const signUpWithEmail = async (
+  firstname: string,
+  lastname: string,
+  email: string,
+  password: string
+) => {
   if (!firstname) {
     // TODO: define custom error
     throw new Error("First name is required");
@@ -72,6 +95,8 @@ export const signUpWithEmail = async (firstname, lastname, email, password) => {
     throw new Error("Last name is required");
   }
 
+  // TODO: find out why
+  // @ts-expect-error
   if (isEmail(email) === false) {
     // TODO: define custom error
     throw new Error("Invalid email address");
@@ -155,7 +180,7 @@ export const signUpWithEmail = async (firstname, lastname, email, password) => {
   return { accessToken, refreshToken, errorMessage };
 };
 
-export const logInWithEmail = async (email, password) => {
+export const logInWithEmail = async (email: string, password: string) => {
   const client = new MongoClient(process.env.DB_CONNECTION_STRING, {
     serverApi: ServerApiVersion.v1,
   });
@@ -165,6 +190,8 @@ export const logInWithEmail = async (email, password) => {
   let errorMessage;
 
   try {
+    // TODO: find out why
+    // @ts-expect-error
     if (!isEmail(email)) {
       throw new Error("Invalid email address");
     } else if (!password || password.length < 8) {
@@ -232,7 +259,9 @@ export const logInWithEmail = async (email, password) => {
   return { accessToken, refreshToken, errorMessage };
 };
 
-export const generateNewAccessTokenFromRefreshToken = async (refreshToken) => {
+export const generateNewAccessTokenFromRefreshToken = async (
+  refreshToken: string
+) => {
   let accessToken;
   let errorMessage;
 
@@ -258,7 +287,7 @@ export const generateNewAccessTokenFromRefreshToken = async (refreshToken) => {
     const { userId } = jwt.verify(
       refreshToken,
       process.env.JWT_SECRET_REFRESH_TOKEN
-    );
+    ) as { userId: string };
 
     accessToken = jwt.sign({ userId }, process.env.JWT_SECRET_ACCESS_TOKEN, {
       expiresIn: "1h",
@@ -281,7 +310,7 @@ export const generateNewAccessTokenFromRefreshToken = async (refreshToken) => {
   return { accessToken, errorMessage };
 };
 
-export const deleteRefreshToken = async (refreshToken) => {
+export const deleteRefreshToken = async (refreshToken: string) => {
   let errorMessage;
 
   // check if the refresh token is in the refreshtokens collection
@@ -318,7 +347,7 @@ export const deleteRefreshToken = async (refreshToken) => {
   return { errorMessage };
 };
 
-export const sendResetPasswordEmailToUser = async (email) => {
+export const sendResetPasswordEmailToUser = async (email: string) => {
   // find user from DB
   const client = new MongoClient(process.env.DB_CONNECTION_STRING, {
     serverApi: ServerApiVersion.v1,
@@ -341,19 +370,15 @@ export const sendResetPasswordEmailToUser = async (email) => {
     );
 
     // send email to user
-    await sendEmail({
-      toAddress: user.email,
-      subject: "Reset password",
-      messageLines: [
-        `Hello ${user.firstname},`,
-        "We received a request to reset your password.",
-        "Please click the link below to reset your password.",
-        `https://crypto-stdev-cra.vercel.app/auth/reset?token=${resetPasswordToken}`,
-        "If you did not request to reset your password, please ignore this email.",
-        "Warm regards,",
-        "Crypto DCA Plan using Statistics App team",
-      ],
-    });
+    await sendEmail(user.email, "Reset password", [
+      `Hello ${user.firstname},`,
+      "We received a request to reset your password.",
+      "Please click the link below to reset your password.",
+      `https://crypto-stdev-cra.vercel.app/auth/reset?token=${resetPasswordToken}`,
+      "If you did not request to reset your password, please ignore this email.",
+      "Warm regards,",
+      "Crypto DCA Plan using Statistics App team",
+    ]);
   } catch (error) {
     Sentry.captureException(error);
   }

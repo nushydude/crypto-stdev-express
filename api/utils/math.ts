@@ -1,8 +1,8 @@
-export const calculateMean = (values) => {
+export const calculateMean = (values: Array<number>): number => {
   return values.reduce((accum, value) => accum + value, 0) / values.length;
 };
 
-export const calculateStandardDeviation = (values) => {
+export const calculateStandardDeviation = (values: Array<number>): number => {
   const mean = calculateMean(values);
 
   const variance =

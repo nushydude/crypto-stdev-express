@@ -1,6 +1,15 @@
+import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
-export const validateBearerToken = (req, res, next) => {
+interface RequestWithUser extends Request {
+  userId?: string;
+}
+
+export const validateBearerToken = (
+  req: RequestWithUser,
+  res: Response,
+  next: NextFunction
+) => {
   const authHeader = req.headers["authorization"];
 
   if (!authHeader) {
@@ -18,7 +27,12 @@ export const validateBearerToken = (req, res, next) => {
   }
 
   try {
-    const { userId } = jwt.verify(token, process.env.JWT_SECRET_ACCESS_TOKEN);
+    const { userId } = jwt.verify(
+      token,
+      process.env.JWT_SECRET_ACCESS_TOKEN
+    ) as {
+      userId: string;
+    };
 
     if (!userId) {
       return res

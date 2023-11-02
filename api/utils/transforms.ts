@@ -1,23 +1,29 @@
-export const transformKLineData = (data) => {
+export const transformKLineData = (
+  data: Array<Array<string>>
+): Array<{
+  openTime: string;
+  openPrice: number;
+  volume: number;
+}> => {
   return data.map((candleStickData) => {
     const [
       openTime,
       openPrice,
-      volume
-      // highPrice,
-      // lowPrice,
-      // closePrice,
-      // closeTime,
-      // quoteAssetVolume,
-      // numTrades,
-      // takerBuyBaseAssetVolume,
-      // takerBuyQuoteAssetVolume
+      _highPrice,
+      _lowPrice,
+      _closePrice,
+      volume,
+      _closeTime,
+      _quoteAssetVolume,
+      _numTrades,
+      _takerBuyBaseAssetVolume,
+      _takerBuyQuoteAssetVolume,
     ] = candleStickData;
 
     return {
       openTime,
       openPrice: parseFloat(openPrice),
-      volume: parseFloat(volume)
+      volume: parseFloat(volume),
     };
   });
 };

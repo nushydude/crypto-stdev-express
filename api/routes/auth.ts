@@ -1,3 +1,4 @@
+import { Request, Response } from "express";
 import {
   signUpWithEmail,
   logInWithEmail,
@@ -6,7 +7,34 @@ import {
   sendResetPasswordEmailToUser,
 } from "../utils/db.js";
 
-export const signUp = async (req, res) => {
+interface SignUpRequestBody {
+  firstname: string;
+  lastname: string;
+  email: string;
+  password: string;
+}
+
+interface LogInRequestBody {
+  email: string;
+  password: string;
+}
+
+interface GenerateNewAccessTokenBody {
+  refreshToken: string;
+}
+
+interface LogOutRequestBody {
+  refreshToken: string;
+}
+
+interface SendResetPasswordEmailReqestBody {
+  email: string;
+}
+
+export const signUp = async (
+  req: Request<{}, {}, SignUpRequestBody>,
+  res: Response
+) => {
   const { firstname, lastname, email, password } = req.body;
 
   const { accessToken, refreshToken, errorMessage } = await signUpWithEmail(
@@ -23,7 +51,10 @@ export const signUp = async (req, res) => {
   return res.json({ accessToken, refreshToken });
 };
 
-export const logIn = async (req, res) => {
+export const logIn = async (
+  req: Request<{}, {}, LogInRequestBody>,
+  res: Response
+) => {
   const { email, password } = req.body;
 
   const { accessToken, refreshToken, errorMessage } = await logInWithEmail(
@@ -38,7 +69,10 @@ export const logIn = async (req, res) => {
   return res.json({ accessToken, refreshToken });
 };
 
-export const generateNewAccessToken = async (req, res) => {
+export const generateNewAccessToken = async (
+  req: Request<{}, {}, GenerateNewAccessTokenBody>,
+  res: Response
+) => {
   const { refreshToken } = req.body;
 
   const { accessToken, errorMessage } =
@@ -51,7 +85,10 @@ export const generateNewAccessToken = async (req, res) => {
   return res.json({ accessToken });
 };
 
-export const logOut = async (req, res) => {
+export const logOut = async (
+  req: Request<{}, {}, LogOutRequestBody>,
+  res: Response
+) => {
   const { refreshToken } = req.body;
 
   const { errorMessage } = await deleteRefreshToken(refreshToken);
@@ -63,7 +100,10 @@ export const logOut = async (req, res) => {
   return res.status(204).send();
 };
 
-export const sendResetPasswordEmail = async (req, res) => {
+export const sendResetPasswordEmail = async (
+  req: Request<{}, {}, SendResetPasswordEmailReqestBody>,
+  res: Response
+) => {
   const { email } = req.body;
 
   await sendResetPasswordEmailToUser(email);

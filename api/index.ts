@@ -1,4 +1,4 @@
-import express from "express";
+import express, { NextFunction, Request, Response } from "express";
 import cors from "cors";
 import Sentry from "@sentry/node";
 import Tracing from "@sentry/tracing";
@@ -10,7 +10,7 @@ import {
   logIn,
   logOut,
   sendResetPasswordEmail,
-  signUp
+  signUp,
 } from "./routes/auth.js";
 import { validateBearerToken } from "./middleware/index.js";
 import { getPortfolio } from "./routes/user.js";
@@ -27,13 +27,13 @@ Sentry.init({
     // enable HTTP calls tracing
     new Sentry.Integrations.Http({ tracing: true }),
     // enable Express.js middleware tracing
-    new Tracing.Integrations.Express({ app })
+    new Tracing.Integrations.Express({ app }),
   ],
 
   // Set tracesSampleRate to 1.0 to capture 100%
   // of transactions for performance monitoring.
   // We recommend adjusting this value in production
-  tracesSampleRate: 1.0
+  tracesSampleRate: 1.0,
 });
 
 // RequestHandler creates a separate execution context using domains, so that every
@@ -65,7 +65,16 @@ app.get("/api/portfolio", validateBearerToken, getPortfolio);
 
 app.use(Sentry.Handlers.errorHandler());
 
-app.use(function onError(err, req, res, next) {
+interface ResponseWithSentry extends Response {
+  sentry?: string;
+}
+
+app.use(function onError(
+  _err: any,
+  req: Request,
+  res: ResponseWithSentry,
+  next: NextFunction
+) {
   // The error id is attached to `res.sentry` to be returned
   // and optionally displayed to the user for support.
   res.statusCode = 500;

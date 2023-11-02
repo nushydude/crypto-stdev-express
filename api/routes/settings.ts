@@ -1,6 +1,14 @@
+import { Request, Response } from "express";
 import axios from "axios";
 
-export const getSettings = async (req, res) => {
+interface GetSettingsRequestBody {
+  uri: string;
+}
+
+export const getSettings = async (
+  req: Request<{}, {}, GetSettingsRequestBody>,
+  res: Response
+) => {
   const { uri } = req.body;
   let success = false;
   let errorMessage = null;
