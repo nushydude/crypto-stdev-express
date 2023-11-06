@@ -5,6 +5,7 @@ import {
   generateNewAccessTokenFromRefreshToken,
   deleteRefreshToken,
   sendResetPasswordEmailToUser,
+  getUserByUserId,
 } from "../utils/db.js";
 
 interface SignUpRequestBody {
@@ -29,6 +30,10 @@ interface LogOutRequestBody {
 
 interface SendResetPasswordEmailReqestBody {
   email: string;
+}
+
+interface RequestWithUser extends Request {
+  userId?: string;
 }
 
 export const signUp = async (
@@ -110,4 +115,27 @@ export const sendResetPasswordEmail = async (
 
   // We don't want to send a specfic message for security reasons.
   return res.status(204).send();
+};
+
+export const getProfile = async (req: RequestWithUser, res: Response) => {
+  const { userId } = req;
+
+  if (!userId) {
+    return res.status(401).json({ errorMessage: "Unauthorized" });
+  }
+
+  const user = await getUserByUserId(userId);
+
+  if (!user) {
+    return res.status(401).json({ errorMessage: "Unauthorized" });
+  }
+
+  const transformedUser = {
+    firstname: user.firstname,
+    lastname: user.lastname,
+    email: user.email,
+    settings: user.settings || {},
+  };
+
+  return res.json(transformedUser);
 };

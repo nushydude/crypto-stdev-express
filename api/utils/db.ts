@@ -1,4 +1,4 @@
-import { MongoClient, ServerApiVersion } from "mongodb";
+import { MongoClient, ObjectId, ServerApiVersion } from "mongodb";
 import Sentry from "@sentry/node";
 import isEmail from "validator/lib/isEmail.js";
 import jwt from "jsonwebtoken";
@@ -382,4 +382,26 @@ export const sendResetPasswordEmailToUser = async (email: string) => {
   } catch (error) {
     Sentry.captureException(error);
   }
+};
+
+export const getUserByUserId = async (userId: string) => {
+  const client = new MongoClient(process.env.DB_CONNECTION_STRING, {
+    serverApi: ServerApiVersion.v1,
+  });
+
+  let user;
+
+  try {
+    await client.connect();
+
+    const usersCollection = client.db(process.env.DB_NAME).collection("users");
+
+    user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+  } catch (error) {
+    Sentry.captureException(error);
+  }
+
+  client.close();
+
+  return user;
 };
