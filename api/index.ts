@@ -11,6 +11,7 @@ import {
   logOut,
   sendResetPasswordEmail,
   signUp,
+  getProfile,
 } from "./routes/auth.js";
 import { validateBearerToken } from "./middleware/index.js";
 import { getPortfolio } from "./routes/user.js";
@@ -61,6 +62,7 @@ app.post("/api/auth/logout", logOut);
 app.post("/api/auth/refresh", generateNewAccessToken);
 app.post("/api/auth/forgot", sendResetPasswordEmail);
 
+app.get("/api/auth/profile", validateBearerToken, getProfile);
 app.get("/api/portfolio", validateBearerToken, getPortfolio);
 
 app.use(Sentry.Handlers.errorHandler());
