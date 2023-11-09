@@ -12,9 +12,10 @@ import {
   sendResetPasswordEmail,
   signUp,
   getProfile,
+  getPortfolio
 } from "./routes/auth.js";
 import { validateBearerToken } from "./middleware/index.js";
-import { getPortfolio } from "./routes/user.js";
+import axios from "axios";
 
 dotenv.config();
 
@@ -28,13 +29,13 @@ Sentry.init({
     // enable HTTP calls tracing
     new Sentry.Integrations.Http({ tracing: true }),
     // enable Express.js middleware tracing
-    new Tracing.Integrations.Express({ app }),
+    new Tracing.Integrations.Express({ app })
   ],
 
   // Set tracesSampleRate to 1.0 to capture 100%
   // of transactions for performance monitoring.
   // We recommend adjusting this value in production
-  tracesSampleRate: 1.0,
+  tracesSampleRate: 1.0
 });
 
 // RequestHandler creates a separate execution context using domains, so that every
@@ -46,7 +47,23 @@ app.use(Sentry.Handlers.tracingHandler());
 app.use(cors());
 app.use(express.json());
 
-app.get("/api/status", (req, res) => res.send("OK"));
+app.get("/api/status", async (req, res) => {
+  let userServiceStatus = "ng";
+
+  try {
+    const userServiceStatusResponse = await axios.get(
+      `${process.env.USER_SERVICE}/api/status`
+    );
+    userServiceStatus = userServiceStatusResponse.data.status;
+  } catch (err) {
+    console.error(err);
+  }
+
+  res.send({
+    gateway: "ok",
+    userServiceStatus
+  });
+});
 
 app.get("/api/binance_kline", getKlineData);
 
