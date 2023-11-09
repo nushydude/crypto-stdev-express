@@ -36,8 +36,7 @@ export const signUp = async (
   try {
     const response = await axios.post(
       `${process.env.USER_SERVICE}/api/user`,
-      req.body,
-      { headers: req.headers }
+      req.body
     );
 
     res.json(response.data);
