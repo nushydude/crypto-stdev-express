@@ -1,12 +1,5 @@
 import { Request, Response } from "express";
-import {
-  signUpWithEmail,
-  logInWithEmail,
-  generateNewAccessTokenFromRefreshToken,
-  deleteRefreshToken,
-  sendResetPasswordEmailToUser,
-  getUserByUserId,
-} from "../utils/db.js";
+import axios from "axios";
 
 interface SignUpRequestBody {
   firstname: string;
@@ -40,102 +33,69 @@ export const signUp = async (
   req: Request<{}, {}, SignUpRequestBody>,
   res: Response
 ) => {
-  const { firstname, lastname, email, password } = req.body;
-
-  const { accessToken, refreshToken, errorMessage } = await signUpWithEmail(
-    firstname,
-    lastname,
-    email,
-    password
+  const response = await axios.post(
+    `${process.env.USERS_SERVICE}/api/user`,
+    req.body
   );
 
-  if (errorMessage) {
-    return res.status(401).json({ errorMessage });
-  }
-
-  return res.json({ accessToken, refreshToken });
+  return response;
 };
 
 export const logIn = async (
   req: Request<{}, {}, LogInRequestBody>,
   res: Response
 ) => {
-  const { email, password } = req.body;
-
-  const { accessToken, refreshToken, errorMessage } = await logInWithEmail(
-    email,
-    password
+  const response = await axios.post(
+    `${process.env.USERS_SERVICE}/api/auth/login`,
+    req.body
   );
 
-  if (errorMessage) {
-    return res.status(401).json({ errorMessage });
-  }
-
-  return res.json({ accessToken, refreshToken });
+  return response;
 };
 
 export const generateNewAccessToken = async (
   req: Request<{}, {}, GenerateNewAccessTokenBody>,
   res: Response
 ) => {
-  const { refreshToken } = req.body;
+  const response = await axios.post(
+    `${process.env.USERS_SERVICE}/api/auth/refresh`,
+    req.body
+  );
 
-  const { accessToken, errorMessage } =
-    await generateNewAccessTokenFromRefreshToken(refreshToken);
-
-  if (errorMessage) {
-    return res.status(401).json({ errorMessage });
-  }
-
-  return res.json({ accessToken });
+  return response;
 };
 
 export const logOut = async (
   req: Request<{}, {}, LogOutRequestBody>,
   res: Response
 ) => {
-  const { refreshToken } = req.body;
+  const response = await axios.post(
+    `${process.env.USERS_SERVICE}/api/auth/logout`,
+    req.body
+  );
 
-  const { errorMessage } = await deleteRefreshToken(refreshToken);
-
-  if (errorMessage) {
-    return res.status(400).json({ errorMessage });
-  }
-
-  return res.status(204).send();
+  return response;
 };
 
 export const sendResetPasswordEmail = async (
   req: Request<{}, {}, SendResetPasswordEmailReqestBody>,
   res: Response
 ) => {
-  const { email } = req.body;
+  const response = await axios.post(
+    `${process.env.USERS_SERVICE}/api/auth/forgot`,
+    req.body
+  );
 
-  await sendResetPasswordEmailToUser(email);
-
-  // We don't want to send a specfic message for security reasons.
-  return res.status(204).send();
+  return response;
 };
 
 export const getProfile = async (req: RequestWithUser, res: Response) => {
-  const { userId } = req;
+  const response = await axios.get(
+    `${process.env.USERS_SERVICE}/api/auth/profile`,
+    {
+      headers: req.headers
+    }
+  );
 
-  if (!userId) {
-    return res.status(401).json({ errorMessage: "Unauthorized" });
-  }
-
-  const user = await getUserByUserId(userId);
-
-  if (!user) {
-    return res.status(401).json({ errorMessage: "Unauthorized" });
-  }
-
-  const transformedUser = {
-    firstname: user.firstname,
-    lastname: user.lastname,
-    email: user.email,
-    settings: user.settings || {},
-  };
-
-  return res.json(transformedUser);
+  return response;
 };
