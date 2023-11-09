@@ -34,8 +34,9 @@ export const signUp = async (
   res: Response
 ) => {
   const response = await axios.post(
-    `${process.env.USERS_SERVICE}/api/user`,
-    req.body
+    `${process.env.USER_SERVICE}/api/user`,
+    req.body,
+    { headers: req.headers }
   );
 
   return response;
@@ -45,12 +46,23 @@ export const logIn = async (
   req: Request<{}, {}, LogInRequestBody>,
   res: Response
 ) => {
-  const response = await axios.post(
-    `${process.env.USERS_SERVICE}/api/auth/login`,
-    req.body
-  );
+  console.log("logIn");
+  console.log("url:", `${process.env.USER_SERVICE}/api/auth/login`);
+  console.log("body:", req.body);
+  console.log("headers:", req.headers);
 
-  return response;
+  try {
+    const response = await axios.post(
+      `${process.env.USER_SERVICE}/api/auth/login`,
+      req.body,
+      { headers: req.headers }
+    );
+    return response;
+  } catch (err) {
+    console.log("err:", err);
+
+    return res.send(500);
+  }
 };
 
 export const generateNewAccessToken = async (
@@ -58,7 +70,7 @@ export const generateNewAccessToken = async (
   res: Response
 ) => {
   const response = await axios.post(
-    `${process.env.USERS_SERVICE}/api/auth/refresh`,
+    `${process.env.USER_SERVICE}/api/auth/refresh`,
     req.body
   );
 
@@ -70,8 +82,9 @@ export const logOut = async (
   res: Response
 ) => {
   const response = await axios.post(
-    `${process.env.USERS_SERVICE}/api/auth/logout`,
-    req.body
+    `${process.env.USER_SERVICE}/api/auth/logout`,
+    req.body,
+    { headers: req.headers }
   );
 
   return response;
@@ -82,8 +95,9 @@ export const sendResetPasswordEmail = async (
   res: Response
 ) => {
   const response = await axios.post(
-    `${process.env.USERS_SERVICE}/api/auth/forgot`,
-    req.body
+    `${process.env.USER_SERVICE}/api/auth/forgot`,
+    req.body,
+    { headers: req.headers }
   );
 
   return response;
@@ -91,7 +105,7 @@ export const sendResetPasswordEmail = async (
 
 export const getProfile = async (req: RequestWithUser, res: Response) => {
   const response = await axios.get(
-    `${process.env.USERS_SERVICE}/api/auth/profile`,
+    `${process.env.USER_SERVICE}/api/auth/profile`,
     {
       headers: req.headers
     }
