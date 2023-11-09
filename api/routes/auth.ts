@@ -33,69 +33,134 @@ export const signUp = async (
   req: Request<{}, {}, SignUpRequestBody>,
   res: Response
 ) => {
-  const response = await axios.post(
-    `${process.env.USERS_SERVICE}/api/user`,
-    req.body
-  );
+  try {
+    const response = await axios.post(
+      `${process.env.USER_SERVICE}/api/user`,
+      req.body,
+      { headers: req.headers }
+    );
 
-  return response;
+    res.json(response.data);
+  } catch (err) {
+    console.error("Error:", err.response || err.message);
+    if (err.response) {
+      res.status(err.response.status).send(err.response.data);
+    } else {
+      res.status(500).send("Internal Server Error");
+    }
+  }
 };
 
 export const logIn = async (
   req: Request<{}, {}, LogInRequestBody>,
   res: Response
 ) => {
-  const response = await axios.post(
-    `${process.env.USERS_SERVICE}/api/auth/login`,
-    req.body
-  );
-
-  return response;
+  try {
+    const response = await axios.post(
+      `${process.env.USER_SERVICE}/api/auth/login`,
+      req.body
+    );
+    res.json(response.data);
+  } catch (err) {
+    console.error("Error:", err.response || err.message);
+    if (err.response) {
+      res.status(err.response.status).send(err.response.data);
+    } else {
+      res.status(500).send("Internal Server Error");
+    }
+  }
 };
 
 export const generateNewAccessToken = async (
   req: Request<{}, {}, GenerateNewAccessTokenBody>,
   res: Response
 ) => {
-  const response = await axios.post(
-    `${process.env.USERS_SERVICE}/api/auth/refresh`,
-    req.body
-  );
+  try {
+    const response = await axios.post(
+      `${process.env.USER_SERVICE}/api/auth/refresh`,
+      req.body
+    );
 
-  return response;
+    return res.json(response.data);
+  } catch (err) {
+    console.error("Error:", err.response || err.message);
+    if (err.response) {
+      res.status(err.response.status).send(err.response.data);
+    } else {
+      res.status(500).send("Internal Server Error");
+    }
+  }
 };
 
 export const logOut = async (
   req: Request<{}, {}, LogOutRequestBody>,
   res: Response
 ) => {
-  const response = await axios.post(
-    `${process.env.USERS_SERVICE}/api/auth/logout`,
-    req.body
-  );
+  try {
+    const response = await axios.post(
+      `${process.env.USER_SERVICE}/api/auth/logout`,
+      req.body
+    );
 
-  return response;
+    res.json(response.data);
+  } catch (err) {
+    console.error("Error:", err.response || err.message);
+    if (err.response) {
+      res.status(err.response.status).send(err.response.data);
+    } else {
+      res.status(500).send("Internal Server Error");
+    }
+  }
 };
 
 export const sendResetPasswordEmail = async (
   req: Request<{}, {}, SendResetPasswordEmailReqestBody>,
   res: Response
 ) => {
-  const response = await axios.post(
-    `${process.env.USERS_SERVICE}/api/auth/forgot`,
-    req.body
-  );
+  try {
+    const response = await axios.post(
+      `${process.env.USER_SERVICE}/api/auth/forgot`,
+      req.body,
+      {
+        headers: {
+          ["authorization"]: req.headers["authorization"]
+        }
+      }
+    );
 
-  return response;
+    res.json(response.data);
+  } catch (err) {
+    console.error("Error:", err.response || err.message);
+    if (err.response) {
+      res.status(err.response.status).send(err.response.data);
+    } else {
+      res.status(500).send("Internal Server Error");
+    }
+  }
 };
 
 export const getProfile = async (req: RequestWithUser, res: Response) => {
-  const response = await axios.get(
-    `${process.env.USERS_SERVICE}/api/auth/profile`,
-    {
-      headers: req.headers
-    }
-  );
+  try {
+    const response = await axios.get(
+      `${process.env.USER_SERVICE}/api/profile`,
+      {
+        headers: {
+          ["authorization"]: req.headers["authorization"]
+        }
+      }
+    );
 
-  return response;
+    res.json(response.data);
+  } catch (err) {
+    console.error("Error:", err.response || err.message);
+    if (err.response) {
+      res.status(err.response.status).send(err.response.data);
+    } else {
+      res.status(500).send("Internal Server Error");
+    }
+  }
+};
+
+export const getPortfolio = async (req: Request, res: Response) => {
+  return res.json([]);
 };
