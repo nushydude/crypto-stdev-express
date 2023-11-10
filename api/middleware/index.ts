@@ -22,7 +22,7 @@ export const validateBearerToken = (
 
   if (!token || authHeader.split(" ")[0] !== "Bearer") {
     return res.status(401).json({
-      errorMessage: "Invalid authorization format. Expected: Bearer [token]",
+      errorMessage: "Invalid authorization format. Expected: Bearer [token]"
     });
   }
 
