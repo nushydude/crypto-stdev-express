@@ -1,5 +1,7 @@
+import { ParamsDictionary } from "express-serve-static-core";
 import { Request, Response } from "express";
 import axios from "axios";
+import { getMicroserviceRequestHeaders } from "../utils/request.js";
 
 interface SignUpRequestBody {
   firstname: string;
@@ -25,7 +27,7 @@ interface SendResetPasswordEmailReqestBody {
   email: string;
 }
 
-interface UpdateWatchPairsRequestParams {
+interface UpdateWatchPairsRequestParams extends ParamsDictionary {
   id: string;
 }
 
@@ -45,11 +47,7 @@ export const signUp = async (
     const response = await axios.post(
       `${process.env.USER_SERVICE}/api/user`,
       req.body,
-      {
-        headers: {
-          "X-API-KEY": process.env.API_GATEWAY_KEY
-        }
-      }
+      { headers: getMicroserviceRequestHeaders(req) }
     );
 
     res.json(response.data);
@@ -71,11 +69,7 @@ export const logIn = async (
     const response = await axios.post(
       `${process.env.USER_SERVICE}/api/auth/login`,
       req.body,
-      {
-        headers: {
-          "X-API-KEY": process.env.API_GATEWAY_KEY
-        }
-      }
+      { headers: getMicroserviceRequestHeaders(req) }
     );
     res.json(response.data);
   } catch (err) {
@@ -96,11 +90,7 @@ export const generateNewAccessToken = async (
     const response = await axios.post(
       `${process.env.USER_SERVICE}/api/auth/refresh`,
       req.body,
-      {
-        headers: {
-          "X-API-KEY": process.env.API_GATEWAY_KEY
-        }
-      }
+      { headers: getMicroserviceRequestHeaders(req) }
     );
 
     return res.json(response.data);
@@ -122,11 +112,7 @@ export const logOut = async (
     const response = await axios.post(
       `${process.env.USER_SERVICE}/api/auth/logout`,
       req.body,
-      {
-        headers: {
-          "X-API-KEY": process.env.API_GATEWAY_KEY
-        }
-      }
+      { headers: getMicroserviceRequestHeaders(req) }
     );
 
     res.json(response.data);
@@ -148,12 +134,7 @@ export const sendResetPasswordEmail = async (
     const response = await axios.post(
       `${process.env.USER_SERVICE}/api/auth/forgot`,
       req.body,
-      {
-        headers: {
-          authorization: req.headers["authorization"],
-          "X-API-KEY": process.env.API_GATEWAY_KEY
-        }
-      }
+      { headers: getMicroserviceRequestHeaders(req) }
     );
 
     res.json(response.data);
@@ -171,12 +152,7 @@ export const getProfile = async (req: RequestWithUser, res: Response) => {
   try {
     const response = await axios.get(
       `${process.env.USER_SERVICE}/api/profile`,
-      {
-        headers: {
-          authorization: req.headers["authorization"],
-          "X-API-KEY": process.env.API_GATEWAY_KEY
-        }
-      }
+      { headers: getMicroserviceRequestHeaders(req) }
     );
 
     res.json(response.data);
@@ -202,12 +178,7 @@ export const updateWatchPairs = async (
     const response = await axios.post(
       `${process.env.USER_SERVICE}/api/user/${req.params.id}/watch_pairs`,
       req.body,
-      {
-        headers: {
-          authorization: req.headers["authorization"],
-          "X-API-KEY": process.env.API_GATEWAY_KEY
-        }
-      }
+      { headers: getMicroserviceRequestHeaders(req) }
     );
 
     res.json(response.data);
