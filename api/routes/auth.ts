@@ -25,6 +25,14 @@ interface SendResetPasswordEmailReqestBody {
   email: string;
 }
 
+interface UpdateWatchPairsRequestParams {
+  id: string;
+}
+
+interface UpdateWatchPairsRequestBody {
+  settings: any;
+}
+
 interface RequestWithUser extends Request {
   userId?: string;
 }
@@ -36,7 +44,12 @@ export const signUp = async (
   try {
     const response = await axios.post(
       `${process.env.USER_SERVICE}/api/user`,
-      req.body
+      req.body,
+      {
+        headers: {
+          "X-API-KEY": process.env.API_GATEWAY_KEY
+        }
+      }
     );
 
     res.json(response.data);
@@ -57,7 +70,12 @@ export const logIn = async (
   try {
     const response = await axios.post(
       `${process.env.USER_SERVICE}/api/auth/login`,
-      req.body
+      req.body,
+      {
+        headers: {
+          "X-API-KEY": process.env.API_GATEWAY_KEY
+        }
+      }
     );
     res.json(response.data);
   } catch (err) {
@@ -77,7 +95,12 @@ export const generateNewAccessToken = async (
   try {
     const response = await axios.post(
       `${process.env.USER_SERVICE}/api/auth/refresh`,
-      req.body
+      req.body,
+      {
+        headers: {
+          "X-API-KEY": process.env.API_GATEWAY_KEY
+        }
+      }
     );
 
     return res.json(response.data);
@@ -98,7 +121,12 @@ export const logOut = async (
   try {
     const response = await axios.post(
       `${process.env.USER_SERVICE}/api/auth/logout`,
-      req.body
+      req.body,
+      {
+        headers: {
+          "X-API-KEY": process.env.API_GATEWAY_KEY
+        }
+      }
     );
 
     res.json(response.data);
@@ -122,7 +150,8 @@ export const sendResetPasswordEmail = async (
       req.body,
       {
         headers: {
-          ["authorization"]: req.headers["authorization"]
+          authorization: req.headers["authorization"],
+          "X-API-KEY": process.env.API_GATEWAY_KEY
         }
       }
     );
@@ -144,7 +173,8 @@ export const getProfile = async (req: RequestWithUser, res: Response) => {
       `${process.env.USER_SERVICE}/api/profile`,
       {
         headers: {
-          ["authorization"]: req.headers["authorization"]
+          authorization: req.headers["authorization"],
+          "X-API-KEY": process.env.API_GATEWAY_KEY
         }
       }
     );
@@ -162,4 +192,31 @@ export const getProfile = async (req: RequestWithUser, res: Response) => {
 
 export const getPortfolio = async (req: Request, res: Response) => {
   return res.json([]);
+};
+
+export const updateWatchPairs = async (
+  req: Request<UpdateWatchPairsRequestParams, {}, UpdateWatchPairsRequestBody>,
+  res: Response
+) => {
+  try {
+    const response = await axios.post(
+      `${process.env.USER_SERVICE}/api/user/${req.params.id}/watch_pairs`,
+      req.body,
+      {
+        headers: {
+          authorization: req.headers["authorization"],
+          "X-API-KEY": process.env.API_GATEWAY_KEY
+        }
+      }
+    );
+
+    res.json(response.data);
+  } catch (err) {
+    console.error("Error:", err.response || err.message);
+    if (err.response) {
+      res.status(err.response.status).send(err.response.data);
+    } else {
+      res.status(500).send("Internal Server Error");
+    }
+  }
 };
