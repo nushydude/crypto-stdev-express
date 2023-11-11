@@ -16,7 +16,15 @@ import {
 import {
   status as userServiceStatus,
   getProfile,
-  getPortfolio
+  getUserProfile,
+  updateUserProfile,
+  getWatchPairs,
+  setWatchPairs,
+  createTransaction,
+  getTransactions,
+  getTransaction,
+  setTransaction,
+  deleteTransaction
 } from "./routes/user.js";
 import { validateBearerToken } from "./middleware/index.js";
 
@@ -66,14 +74,36 @@ app.get("/api/symbols", getSymbols);
 
 app.get("/api/best_dca", getBestDCA);
 
-// legacy - to be replaced
 app.post("/api/user", signUp);
 app.post("/api/auth/login", logIn);
 app.post("/api/auth/logout", logOut);
 app.post("/api/auth/refresh", generateNewAccessToken);
 app.post("/api/auth/forgot", forgotPassword);
+
+app.get("/api/profile", validateBearerToken, getUserProfile);
+app.patch("/api/profile", validateBearerToken, updateUserProfile);
+app.get("/api/watch_pairs", validateBearerToken, getWatchPairs);
+app.put("/api/watch_pairs", validateBearerToken, setWatchPairs);
+app.post("/api/transactions", validateBearerToken, createTransaction);
+app.get("/api/transactions", validateBearerToken, getTransactions);
+app.get(
+  "/api/transactions/:transactionId",
+  validateBearerToken,
+  getTransaction
+);
+app.put(
+  "/api/transactions/:transactionId",
+  validateBearerToken,
+  setTransaction
+);
+app.delete(
+  "/api/transactions/:transactionId",
+  validateBearerToken,
+  deleteTransaction
+);
+
+// DEPRECATED - switch to
 app.get("/api/auth/profile", validateBearerToken, getProfile);
-app.get("/api/portfolio", validateBearerToken, getPortfolio);
 
 app.use(Sentry.Handlers.errorHandler());
 
