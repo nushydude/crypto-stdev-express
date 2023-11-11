@@ -1,6 +1,7 @@
-import { ParamsDictionary } from "express-serve-static-core";
+import Sentry from "@sentry/node";
 import { Request, Response } from "express";
 import axios from "axios";
+import isEmail from "validator/lib/isEmail.js";
 import { getMicroserviceRequestHeaders } from "../utils/request.js";
 
 interface SignUpRequestBody {
@@ -27,26 +28,41 @@ interface SendResetPasswordEmailReqestBody {
   email: string;
 }
 
-interface UpdateWatchPairsRequestParams extends ParamsDictionary {
-  id: string;
-}
+export const status = async (req: Request) => {
+  let authService = "ng";
+  try {
+    const authServiceResponse = await axios.get(
+      `${process.env.AUTH_SERVICE}/api/status`,
+      { headers: getMicroserviceRequestHeaders(req) }
+    );
+    authService = authServiceResponse.data.status;
+  } catch (err) {
+    console.error(err);
+  }
 
-interface UpdateWatchPairsRequestBody {
-  settings: any;
-}
-
-interface RequestWithUser extends Request {
-  userId?: string;
-}
+  return authService;
+};
 
 export const signUp = async (
   req: Request<{}, {}, SignUpRequestBody>,
   res: Response
 ) => {
+  const { firstname, lastname, email, password } = req.body;
+
+  if (
+    typeof firstname !== "string" ||
+    typeof lastname !== "string" ||
+    typeof email !== "string" ||
+    typeof password !== "string"
+  ) {
+    Sentry.captureException("Invalid request body");
+    res.status(400).send("Bad Request");
+  }
+
   try {
     const response = await axios.post(
-      `${process.env.USER_SERVICE}/api/user`,
-      req.body,
+      `${process.env.AUTH_SERVICE}/api/users`,
+      { email, password, firstname, lastname },
       { headers: getMicroserviceRequestHeaders(req) }
     );
 
@@ -65,12 +81,47 @@ export const logIn = async (
   req: Request<{}, {}, LogInRequestBody>,
   res: Response
 ) => {
+  const { email, password } = req.body;
+
+  if (typeof email !== "string" || typeof password !== "string") {
+    Sentry.captureException("Email or password is not a string");
+    res.status(400).send("Bad Request");
+  }
+
   try {
     const response = await axios.post(
-      `${process.env.USER_SERVICE}/api/auth/login`,
-      req.body,
+      `${process.env.AUTH_SERVICE}/api/sessions`,
+      { email, password },
       { headers: getMicroserviceRequestHeaders(req) }
     );
+    res.json(response.data);
+  } catch (err) {
+    console.error("Error:", err.response || err.message);
+    if (err.response) {
+      res.status(err.response.status).send(err.response.data);
+    } else {
+      res.status(500).send("Internal Server Error");
+    }
+  }
+};
+
+export const logOut = async (
+  req: Request<{}, {}, LogOutRequestBody>,
+  res: Response
+) => {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken || typeof refreshToken !== "string") {
+    Sentry.captureException("Invalid refreshToken in body");
+    res.status(400).send("Bad Request");
+  }
+
+  try {
+    const response = await axios.delete(
+      `${process.env.AUTH_SERVICE}/api/sessions/${refreshToken}`,
+      { headers: getMicroserviceRequestHeaders(req) }
+    );
+
     res.json(response.data);
   } catch (err) {
     console.error("Error:", err.response || err.message);
@@ -86,10 +137,17 @@ export const generateNewAccessToken = async (
   req: Request<{}, {}, GenerateNewAccessTokenBody>,
   res: Response
 ) => {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken) {
+    Sentry.captureException("Bad Request");
+    res.status(400).send("Bad Request");
+  }
+
   try {
     const response = await axios.post(
-      `${process.env.USER_SERVICE}/api/auth/refresh`,
-      req.body,
+      `${process.env.AUTH_SERVICE}/api/sessions/refresh`,
+      { refreshToken },
       { headers: getMicroserviceRequestHeaders(req) }
     );
 
@@ -104,80 +162,23 @@ export const generateNewAccessToken = async (
   }
 };
 
-export const logOut = async (
-  req: Request<{}, {}, LogOutRequestBody>,
-  res: Response
-) => {
-  try {
-    const response = await axios.post(
-      `${process.env.USER_SERVICE}/api/auth/logout`,
-      req.body,
-      { headers: getMicroserviceRequestHeaders(req) }
-    );
-
-    res.json(response.data);
-  } catch (err) {
-    console.error("Error:", err.response || err.message);
-    if (err.response) {
-      res.status(err.response.status).send(err.response.data);
-    } else {
-      res.status(500).send("Internal Server Error");
-    }
-  }
-};
-
-export const sendResetPasswordEmail = async (
+export const forgotPassword = async (
   req: Request<{}, {}, SendResetPasswordEmailReqestBody>,
   res: Response
 ) => {
+  const { email } = req.body;
+
+  // TODO: find out why
+  // @ts-expect-error
+  if (!isEmail(email)) {
+    Sentry.captureException("Invalid email");
+    res.status(400).send("Bad Request");
+  }
+
   try {
     const response = await axios.post(
-      `${process.env.USER_SERVICE}/api/auth/forgot`,
-      req.body,
-      { headers: getMicroserviceRequestHeaders(req) }
-    );
-
-    res.json(response.data);
-  } catch (err) {
-    console.error("Error:", err.response || err.message);
-    if (err.response) {
-      res.status(err.response.status).send(err.response.data);
-    } else {
-      res.status(500).send("Internal Server Error");
-    }
-  }
-};
-
-export const getProfile = async (req: RequestWithUser, res: Response) => {
-  try {
-    const response = await axios.get(
-      `${process.env.USER_SERVICE}/api/profile`,
-      { headers: getMicroserviceRequestHeaders(req) }
-    );
-
-    res.json(response.data);
-  } catch (err) {
-    console.error("Error:", err.response || err.message);
-    if (err.response) {
-      res.status(err.response.status).send(err.response.data);
-    } else {
-      res.status(500).send("Internal Server Error");
-    }
-  }
-};
-
-export const getPortfolio = async (req: Request, res: Response) => {
-  return res.json([]);
-};
-
-export const updateWatchPairs = async (
-  req: Request<UpdateWatchPairsRequestParams, {}, UpdateWatchPairsRequestBody>,
-  res: Response
-) => {
-  try {
-    const response = await axios.post(
-      `${process.env.USER_SERVICE}/api/user/${req.params.id}/watch_pairs`,
-      req.body,
+      `${process.env.AUTH_SERVICE}/api/users/forgot`,
+      { email },
       { headers: getMicroserviceRequestHeaders(req) }
     );
 
