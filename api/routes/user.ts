@@ -33,7 +33,7 @@ export const status = async (req: Request) => {
 export const getProfile = async (req: RequestWithUser, res: Response) => {
   try {
     const response = await axios.get(
-      `${process.env.AUTH_SERVICE}/api/profile`,
+      `${process.env.USER_SERVICE}/api/profile`,
       { headers: getMicroserviceRequestHeaders(req) }
     );
 
