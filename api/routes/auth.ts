@@ -1,11 +1,8 @@
+import Sentry from "@sentry/node";
 import { Request, Response } from "express";
-import {
-  signUpWithEmail,
-  logInWithEmail,
-  generateNewAccessTokenFromRefreshToken,
-  deleteRefreshToken,
-  sendResetPasswordEmailToUser,
-} from "../utils/db.js";
+import axios from "axios";
+import isEmail from "validator/lib/isEmail.js";
+import { getMicroserviceRequestHeaders } from "../utils/request.js";
 
 interface SignUpRequestBody {
   firstname: string;
@@ -31,24 +28,53 @@ interface SendResetPasswordEmailReqestBody {
   email: string;
 }
 
+export const status = async (req: Request) => {
+  let authService = "ng";
+  try {
+    const authServiceResponse = await axios.get(
+      `${process.env.AUTH_SERVICE}/api/status`,
+      { headers: getMicroserviceRequestHeaders(req) }
+    );
+    authService = authServiceResponse.data.status;
+  } catch (err) {
+    console.error(err);
+  }
+
+  return authService;
+};
+
 export const signUp = async (
   req: Request<{}, {}, SignUpRequestBody>,
   res: Response
 ) => {
   const { firstname, lastname, email, password } = req.body;
 
-  const { accessToken, refreshToken, errorMessage } = await signUpWithEmail(
-    firstname,
-    lastname,
-    email,
-    password
-  );
-
-  if (errorMessage) {
-    return res.status(401).json({ errorMessage });
+  if (
+    typeof firstname !== "string" ||
+    typeof lastname !== "string" ||
+    typeof email !== "string" ||
+    typeof password !== "string"
+  ) {
+    Sentry.captureException("Invalid request body");
+    res.status(400).send("Bad Request");
   }
 
-  return res.json({ accessToken, refreshToken });
+  try {
+    const response = await axios.post(
+      `${process.env.AUTH_SERVICE}/api/users`,
+      { email, password, firstname, lastname },
+      { headers: getMicroserviceRequestHeaders(req) }
+    );
+
+    res.json(response.data);
+  } catch (err) {
+    console.error("Error:", err.response || err.message);
+    if (err.response) {
+      res.status(err.response.status).send(err.response.data);
+    } else {
+      res.status(500).send("Internal Server Error");
+    }
+  }
 };
 
 export const logIn = async (
@@ -57,32 +83,26 @@ export const logIn = async (
 ) => {
   const { email, password } = req.body;
 
-  const { accessToken, refreshToken, errorMessage } = await logInWithEmail(
-    email,
-    password
-  );
-
-  if (errorMessage) {
-    return res.status(401).json({ errorMessage });
+  if (typeof email !== "string" || typeof password !== "string") {
+    Sentry.captureException("Email or password is not a string");
+    res.status(400).send("Bad Request");
   }
 
-  return res.json({ accessToken, refreshToken });
-};
-
-export const generateNewAccessToken = async (
-  req: Request<{}, {}, GenerateNewAccessTokenBody>,
-  res: Response
-) => {
-  const { refreshToken } = req.body;
-
-  const { accessToken, errorMessage } =
-    await generateNewAccessTokenFromRefreshToken(refreshToken);
-
-  if (errorMessage) {
-    return res.status(401).json({ errorMessage });
+  try {
+    const response = await axios.post(
+      `${process.env.AUTH_SERVICE}/api/sessions`,
+      { email, password },
+      { headers: getMicroserviceRequestHeaders(req) }
+    );
+    res.json(response.data);
+  } catch (err) {
+    console.error("Error:", err.response || err.message);
+    if (err.response) {
+      res.status(err.response.status).send(err.response.data);
+    } else {
+      res.status(500).send("Internal Server Error");
+    }
   }
-
-  return res.json({ accessToken });
 };
 
 export const logOut = async (
@@ -91,23 +111,84 @@ export const logOut = async (
 ) => {
   const { refreshToken } = req.body;
 
-  const { errorMessage } = await deleteRefreshToken(refreshToken);
-
-  if (errorMessage) {
-    return res.status(400).json({ errorMessage });
+  if (!refreshToken || typeof refreshToken !== "string") {
+    Sentry.captureException("Invalid refreshToken in body");
+    res.status(400).send("Bad Request");
   }
 
-  return res.status(204).send();
+  try {
+    const response = await axios.delete(
+      `${process.env.AUTH_SERVICE}/api/sessions/${refreshToken}`,
+      { headers: getMicroserviceRequestHeaders(req) }
+    );
+
+    res.json(response.data);
+  } catch (err) {
+    console.error("Error:", err.response || err.message);
+    if (err.response) {
+      res.status(err.response.status).send(err.response.data);
+    } else {
+      res.status(500).send("Internal Server Error");
+    }
+  }
 };
 
-export const sendResetPasswordEmail = async (
+export const generateNewAccessToken = async (
+  req: Request<{}, {}, GenerateNewAccessTokenBody>,
+  res: Response
+) => {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken) {
+    Sentry.captureException("Bad Request");
+    res.status(400).send("Bad Request");
+  }
+
+  try {
+    const response = await axios.post(
+      `${process.env.AUTH_SERVICE}/api/sessions/refresh`,
+      { refreshToken },
+      { headers: getMicroserviceRequestHeaders(req) }
+    );
+
+    return res.json(response.data);
+  } catch (err) {
+    console.error("Error:", err.response || err.message);
+    if (err.response) {
+      res.status(err.response.status).send(err.response.data);
+    } else {
+      res.status(500).send("Internal Server Error");
+    }
+  }
+};
+
+export const forgotPassword = async (
   req: Request<{}, {}, SendResetPasswordEmailReqestBody>,
   res: Response
 ) => {
   const { email } = req.body;
 
-  await sendResetPasswordEmailToUser(email);
+  // TODO: find out why
+  // @ts-expect-error
+  if (!isEmail(email)) {
+    Sentry.captureException("Invalid email");
+    res.status(400).send("Bad Request");
+  }
 
-  // We don't want to send a specfic message for security reasons.
-  return res.status(204).send();
+  try {
+    const response = await axios.post(
+      `${process.env.AUTH_SERVICE}/api/users/forgot`,
+      { email },
+      { headers: getMicroserviceRequestHeaders(req) }
+    );
+
+    res.json(response.data);
+  } catch (err) {
+    console.error("Error:", err.response || err.message);
+    if (err.response) {
+      res.status(err.response.status).send(err.response.data);
+    } else {
+      res.status(500).send("Internal Server Error");
+    }
+  }
 };
